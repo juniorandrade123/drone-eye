@@ -8,7 +8,7 @@ import { Component, Input } from '@angular/core';
     <div [class]="className">
       <a class="logo-dark">
         @if (size) {
-          <div class="amc-title">AMC</div>
+          <div class="amc-title"></div>
         } @else {
           <img src="assets/images/logo-dark.png" height="24" alt="logo dark" />
         }
@@ -16,7 +16,7 @@ import { Component, Input } from '@angular/core';
 
       <a class="logo-light">
         @if (size) {
-          <div class="amc-title-dark">AMC</div>
+          <div class="amc-title-dark"></div>
         } @else {
           <img
             src="assets/images/logo-light.png"

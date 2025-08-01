@@ -1,10 +1,10 @@
 <div class="card p-4 border-0 shadow-sm rounded-3">
-  <h3 class="font-semibold leading-none tracking-tight flex items-center gap-2">
+  <h4 class="fw-semibold text-dark mb-1 d-flex align-items-center">
     <i class="me-2">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-warehouse h-5 w-5 text-blue-600"><path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35A2 2 0 0 1 3.26 6.5l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z"></path><path d="M6 18h12"></path><path d="M6 14h12"></path><rect width="12" height="12" x="6" y="10"></rect></svg>
     </i>
     Status dos Centros de Distribuição
-  </h3>
+  </h4>
   <p class="text-muted small mb-4">
     Monitoramento em tempo real da ocupação e atividade dos CDs
   </p>
@@ -12,7 +12,6 @@
   <div class="list-group list-group-flush">
     <div *ngFor="let cd of cds" class="list-group-item px-0 pb-3">
       <div class="d-flex justify-content-between align-items-center flex-wrap">
-
         <div class="d-flex align-items-center mb-2 mb-md-0">
           <span
             class="dot me-2"
@@ -50,7 +49,9 @@
           </div>
 
           <button class="btn btn-outline-secondary btn-sm px-3">
-            <i class="bi bi-pencil me-1"></i> Editar
+            <i class="me-1">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings h-4 w-4"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </i> Editar
           </button>
         </div>
 
