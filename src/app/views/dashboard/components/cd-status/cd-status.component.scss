@@ -1,0 +1,35 @@
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.list-group-item {
+  border: none;
+  border-bottom: 1px solid #e5e7eb;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.tracking-tight {
+    letter-spacing: -.025em;
+}
+.leading-none {
+    line-height: 1;
+}
+.font-semibold {
+    font-weight: 600;
+}
+.text-2xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+}
+.gap-2 {
+    gap: .5rem;
+}
+.items-center {
+    align-items: center;
+}
