@@ -1,5 +1,5 @@
 
-# 📦 Projeto AMC - Angular App
+# 📦 Projeto FLYCOUNT - Angular App
 
 Esta é uma aplicação web desenvolvida com Angular, focada na organização modular e escalável de funcionalidades, com divisão clara entre componentes, views, serviços e estado (store).
 

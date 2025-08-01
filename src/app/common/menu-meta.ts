@@ -14,7 +14,7 @@ export type MenuItem = {
 export const MENU: MenuItem[] = [
   {
     key: 'general',
-    label: 'Geral',
+    label: 'Sistema de Inventário',
   isTitle: true,
   },
   {
@@ -22,11 +22,5 @@ export const MENU: MenuItem[] = [
     icon: 'solar:chart-linear',
     label: 'Dashboard',
     link:'/index'
-  },
-  {
-    key: 'audits',
-    icon: 'solar:file-text-linear',
-    label: 'Auditoria',
-    link:'/audits/list'
   }
 ]
