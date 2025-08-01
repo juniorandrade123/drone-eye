@@ -1,0 +1,23 @@
+@import "../../../../../../../../node_modules/bootstrap/scss/functions";
+@import "../../../../../../../../node_modules/bootstrap/scss/variables";
+@import "../../../../../../../assets/scss/config/variables-dark";
+
+.th-span {
+    width: max-content;
+    display: block;
+    color: #313B5E;
+    margin: 0 auto;
+}
+
+.tr-background {
+    background-color: $background-tr;
+
+    span {
+        color: $color-tr-span !important;
+    }
+}
+
+.loader-btn {
+    font-size: 6px !important;
+    border-left: 1.1em solid #4581F7 !important;
+}

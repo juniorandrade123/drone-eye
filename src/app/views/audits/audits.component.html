@@ -1,0 +1,41 @@
+<breadcrumb title="Auditorias" subTitle="Dashboard" titleBtn="Nova Auditoria" [isCallMethod]="true"
+(callMethod)="openModalAdd()" />
+
+<app-audits-table-grid>
+  <!-- <div class="row">
+    <div class="col-sm-12 col-md-8 col-lg-6">
+      <span class="span-search">Pesquisa Rápida</span><br />
+      <input
+        class="search-input"
+        type="text"
+        placeholder="Enter para filtrar ..."
+        (keyup.enter)="executeSearch()"
+      />
+      <button
+        class="btn-filter btn-actions btn-search"
+        style="display: none; margin-left: 10px"
+        (click)="executeSearch()"
+      >
+        Pesquisar
+      </button>
+    </div>
+    <div class="col-sm-12 col-lg-6 text-right margin-group-btn-filter">
+      <button class="btn-filter btn-actions btn-filter" (click)="showFilter()">
+        Filtros
+        <span *ngIf="isFilterApplied" class="filter-applied"></span>
+      </button>
+    </div>
+  </div> -->
+</app-audits-table-grid>
+<!-- <app-filter-menu (closeBackgroundFilter)="changeFilterMenu()">
+  <app-audits-filter
+    (filterObject)="ApplyFilter($event)"
+    (executeResetFilter)="resetFilter($event)"
+  >
+  </app-audits-filter>
+</app-filter-menu> -->
+<!-- <div
+  *ngIf="showMenuFilter"
+  (click)="changeFilterMenu()"
+  class="filter-menu-background"
+></div> -->

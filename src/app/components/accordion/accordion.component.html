@@ -1,0 +1,24 @@
+<div class="accordion">
+  <div [class.backgroundWarning]="isBackgroundWarning" class="accordion-panel collapse">
+    <div style="width: 90%;" (click)="togglePanelCollapse()">
+      <span [class.title-template]="isUsingCssTitle"><span class="space-label">
+        </span> {{title}}</span>
+    </div>
+    <div class="text-end" style="width: 5%;" (click)="togglePanelCollapse()">
+      <iconify-icon icon="solar:alt-arrow-down-line-duotone" class="align-middle fs-18"
+        [hidden]="!isPanelCollapsed"></iconify-icon>
+      <iconify-icon icon="solar:alt-arrow-up-line-duotone" class="align-middle fs-18"
+        [hidden]="isPanelCollapsed"></iconify-icon>
+    </div>
+
+    <div *ngIf="isUsingFilter" (click)="filter()">
+      <span *ngIf="isApplyFilter" ngbTooltip="Filtro aplicado" style="margin-top: 1px;margin-left: 20px;"
+        class="circle-pending position-absolute topbar-badge fs-10 translate-middle badge bg-warning rounded-pill cursor-pointer"><span
+          class="visually-hidden">unread messages</span></span>
+      <iconify-icon icon="solar:filter-bold" class="align-middle fs-20"></iconify-icon>
+    </div>
+  </div>
+  <div class="accordion-content">
+    <ng-content select=".panel-body"></ng-content>
+  </div>
+</div>

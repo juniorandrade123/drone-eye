@@ -1,0 +1,76 @@
+@import "../../../../../../node_modules/bootstrap/scss/functions";
+@import "../../../../../../node_modules/bootstrap/scss/variables";
+@import "../../../../../assets/scss/config/variables-dark";
+
+.number-image {
+    position: absolute;
+    top: 50%;
+    transform: translate(0, -50%);
+    left: 39%;
+    font-size: 22px;
+}
+
+.border-img {
+    padding: 5em;
+}
+
+.dropzone {
+    background-color: $background-dark;
+}
+
+.card-header {
+    border-bottom: 0px;
+    margin-bottom: -30px;
+}
+
+.card-body {
+    overflow-x: auto;
+}
+
+.row-width {
+    width: 99.9%;
+    margin-left: 0em;
+}
+
+.color-warning {
+    color: #fac302 !important;
+}
+
+.color-success {
+    color: #04CB47 !important;
+}
+
+.color-error {
+    color: #C92B19 !important;
+}
+
+.padding-square {
+    padding: 2.25rem !important;
+}
+
+.tr-background {
+    background-color: $background-tr;
+
+    span {
+        color: $color-tr-span !important;
+    }
+}
+
+.icon-refresh {
+    font-size: 35px;
+    margin-left: 10px;
+}
+
+.loader-btn {
+    font-size: 4px !important;
+    border-left: 1.1em solid #4581F7 !important;
+}
+
+.block {
+    display: block !important;
+}
+
+.circle-pending {
+    width: 10px;
+    height: 10px;
+}

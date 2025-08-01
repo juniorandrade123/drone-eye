@@ -1,19 +1,57 @@
-import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { HeaderComponent } from './components/header/header.component';
-import { DashboardComponent } from './pages/dashboard/dashboard.component';
+import { HttpClientModule } from '@angular/common/http'
+import { Component, inject, ViewChild, type OnInit } from '@angular/core'
+import {
+  NavigationCancel,
+  NavigationEnd,
+  NavigationError,
+  NavigationStart,
+  Router,
+  RouterOutlet,
+  type Event,
+} from '@angular/router'
+import { PageLoaderComponent } from '@component/page-loader/page-loader.component'
+import { TitleService } from '@core/services/title.service'
+import {
+  NgProgressComponent,
+  NgProgressModule,
+  type NgProgressRef,
+} from 'ngx-progressbar'
 
 @Component({
   selector: 'app-root',
-  imports: [
-    RouterOutlet,
-    CommonModule,
-    HeaderComponent,
-  ],
+  imports: [RouterOutlet, NgProgressModule, PageLoaderComponent, HttpClientModule],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  styleUrl: './app.component.scss',
 })
-export class AppComponent {
-  title = 'dashboard-app';
+export class AppComponent implements OnInit {
+  progressRef!: NgProgressRef
+  @ViewChild(NgProgressComponent) progressBar!: NgProgressComponent
+
+  private titleService = inject(TitleService)
+  private router = inject(Router)
+
+  constructor() {
+    this.router.events.subscribe((event: Event) => {
+      this.checkRouteChange(event)
+    })
+  }
+
+  ngOnInit(): void {
+    this.titleService.init()
+  }
+
+  checkRouteChange(routerEvent: Event) {
+    if (routerEvent instanceof NavigationStart) {
+      this.progressBar.start()
+    }
+    if (
+      routerEvent instanceof NavigationEnd ||
+      routerEvent instanceof NavigationCancel ||
+      routerEvent instanceof NavigationError
+    ) {
+      setTimeout(() => {
+        this.progressBar.complete()
+      }, 200)
+    }
+  }
 }

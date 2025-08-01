@@ -1,0 +1,40 @@
+//
+// _authentication.scss
+//
+
+.bg-auth {
+     background-repeat: no-repeat;
+     background-size: cover;
+     background-position: center;
+     position: relative;
+     z-index: 1;
+     background-image: url("../../images/loginfundo.png");
+}
+
+.auth-logo {
+     .logo-dark {
+          display: block;
+     }
+
+     .logo-light {
+          display: none;
+     }
+}
+
+html[data-bs-theme="dark"] {
+
+     .bg-auth {
+          background-image: linear-gradient(to top, #30cfd0 0%, #330867 100%);
+     }
+
+
+     .auth-logo {
+          .logo-dark {
+               display: none;
+          }
+
+          .logo-light {
+               display: block;
+          }
+     }
+}

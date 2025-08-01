@@ -1,0 +1,31 @@
+<div class="row">
+  <div class="col-9">
+    <div class="page-title-box">
+      <h4 class="mb-0" style="font-size: 22px;">{{ title }}</h4>
+    </div>
+  </div>
+  <div class="col-3" *ngIf="showBtn">
+    <div class="text-md-end mt-3">
+      <button *ngIf="!isCallMethod" [ngClass]="{'btn-light': isBtnBack, 'btn-success': !isBtnBack}"
+        class="btn me-1" routerLink="{{ urlBtn }}">
+        <i class="bx bx-arrow-back"></i> {{ titleBtn }}
+      </button>
+
+      <button *ngIf="isCallMethod" class="btn btn-primary me-1" (click)="sendMethod()">
+        <i class="bx bx-plus"></i>{{ titleBtn }}
+      </button>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-12">
+    <div class="page-title-box" style="padding: 0;margin-bottom: 2em;margin-top: -1em;">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+          {{ subTitle }}
+        </li>
+        <li class="breadcrumb-item active">{{ title }}</li>
+      </ol>
+    </div>
+  </div>
+</div>

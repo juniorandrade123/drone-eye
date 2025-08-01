@@ -1,0 +1,84 @@
+<header class="topbar">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <div class="d-flex align-items-center">
+        <div class="topbar-item">
+          <button type="button" class="button-toggle-menu me-2" (click)="changeSidebarSize()">
+            <iconify-icon icon="solar:hamburger-menu-outline" class="fs-24 align-middle"></iconify-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="d-flex align-items-center gap-1">
+        <div class="topbar-item">
+          <button type="button" class="topbar-button" (click)="changeTheme()" id="light-dark-mode">
+            <i class="bx bx-moon fs-24 align-middle"></i>
+          </button>
+        </div>
+        <div ngbDropdown class="dropdown topbar-item">
+          <button ngbDropdownToggle type="button" class="topbar-button position-relative arrow-none"
+            id="page-header-notifications-dropdown">
+            <i class="bx bx-bell fs-24 align-middle"></i>
+            <span
+              class="position-absolute topbar-badge fs-10 translate-middle badge bg-danger rounded-pill">{{notificationList.length}}<span
+                class="visually-hidden">unread messages</span></span>
+          </button>
+          <div ngbDropdownMenu class="dropdown-menu py-0 dropdown-lg dropdown-menu-end"
+            aria-labelledby="page-header-notifications-dropdown">
+            <div class="p-3 border-top-0 border-start-0 border-end-0 border-dashed border">
+              <div class="row align-items-center">
+                <div class="col">
+                  <h6 class="m-0 fs-16 fw-semibold"> Notificações</h6>
+                </div>
+                <div class="col-auto">
+                  <a href="javascript: void(0);" class="text-dark text-decoration-underline">
+                    <small>Limpar</small>
+                  </a>
+                </div>
+              </div>
+            </div>
+            <ngx-simplebar data-simplebar style="max-height: 280px;">
+
+              @for (notify of notificationList; track $index) {
+              <a href="javascript:void(0);" class="dropdown-item py-3 border-bottom text-wrap">
+                <div class="d-flex">
+                  <div class="flex-shrink-0">
+                    <div class="avatar-sm me-2">
+                      <span class="avatar-title bg-soft-info text-info fs-20 rounded-circle">
+                        S
+                      </span>
+                    </div>
+                  </div>
+                  <div class="flex-grow-1">
+                    <p class="mb-0 text-wrap">{{ notify.content }}</p>
+                  </div>
+                </div>
+              </a>
+              }
+            </ngx-simplebar>
+            <div class="text-center py-3">
+              <a href="javascript:void(0);" class="btn btn-primary btn-sm">Todas as notificações <i
+                  class="bx bx-right-arrow-alt ms-1"></i></a>
+            </div>
+          </div>
+        </div>
+        <div ngbDropdown class="dropdown topbar-item">
+          <a ngbDropdownToggle type="button" class="topbar-button arrow-none" id="page-header-user-dropdown">
+            <span class="d-flex align-items-center">
+              <div class="avatar-sm me-2">
+                <span class="avatar-title bg-soft-info text-info fs-20 rounded-circle">
+                  S
+                </span>
+              </div>
+            </span>
+          </a>
+          <div ngbDropdownMenu class="dropdown-menu dropdown-menu-end">
+            <a class="dropdown-item text-danger" role="button" (click)="logout()">
+              <i class="bx bx-log-out fs-18 align-middle me-1"></i><span class="align-middle">Logout</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>

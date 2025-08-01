@@ -1,0 +1,46 @@
+<div class="pagination" [class]="{ disabled: !tableRequestReturned }">
+  <div class="itens-per-page" *ngIf="tableRequestReturned">
+    <div *ngIf="showItensPerPage">
+      <span>Exibir</span>
+      <span class="showing">
+        <select id="listQtyPerPage" [(ngModel)]="selectedOption" (change)="onChange()" class="select-page">
+          <option *ngFor="let item of options" [ngValue]="item">
+            {{ item }}
+          </option>
+        </select>
+      </span>
+      <span> itens por página</span>
+    </div>
+    <div [ngStyle]="{ 'margin-left': showItensPerPage ? '' : '0px' }" class="results">
+      <span>Exibindo</span>
+      <span class="showing">{{ tableListLength }}</span>
+      <span>de</span>
+      <span class="of">{{ totalItemsCount }}</span>
+      <span>Resultados</span>
+    </div>
+  </div>
+  <div [class.margin-grid-number]="marginGridNumber" class="page-numbers" *ngIf="totalItemsCount > itemsPerPageFixed">
+    <span class="double-arrow arrows-left" id="click-first-page" (click)="showFirstPage()">
+
+      <iconify-icon icon="solar:double-alt-arrow-left-linear" class="align-middle fs-18"
+        [class]="{ disabled: selectedPageIndex === 0 }"></iconify-icon>
+    </span>
+    <span class="arrow arrow-left" id="click-previous-page" (click)="showPreviousPage()">
+      <iconify-icon icon="solar:alt-arrow-left-linear" class="align-middle fs-18"
+        [class]="{ disabled: showingFirstPage }"></iconify-icon>
+    </span>
+
+    <span *ngFor="let page of pagesToDisplay" id="click-page-{{ page.pageIndex }}"
+      (click)="emitPageRequested(page.pageIndex)" [class]="{ active: page.pageIndex === selectedPageIndex }">{{
+      page.number }}</span>
+
+    <span class="arrow arrow-right" id="click-next-page" (click)="showNextPage()">
+      <iconify-icon icon="solar:alt-arrow-right-linear" class="align-middle fs-18"
+        [class]="{ disabled: showingLastPage }"></iconify-icon>
+    </span>
+    <span class="double-arrow arrows-right" id="click-last-page" (click)="showLastPage()">
+      <iconify-icon icon="solar:double-alt-arrow-right-linear" class="align-middle fs-18"
+        [class]="{ disabled: selectedPageIndex === totalPages - 1 }"></iconify-icon>
+    </span>
+  </div>
+</div>

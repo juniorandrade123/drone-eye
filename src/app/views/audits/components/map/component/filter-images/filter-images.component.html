@@ -1,0 +1,33 @@
+<form [formGroup]="form">
+  <div class="form-group">
+    <div class="row">
+      <div class="col-12">
+        <label class="form-label">Rua</label>
+        <ng-select placeholder="Selecione a Rua" [items]="lstRoads" bindLabel="description" bindValue="description"
+          formControlName="road">
+        </ng-select>
+      </div>
+    </div>
+    <div class="row mt-3">
+      <div class="col-12">
+        <label class="form-label">Palete</label>
+        <ng-select placeholder="Selecione o Palete" [items]="lstPaletes" bindLabel="description" bindValue="description"
+          formControlName="palete">
+        </ng-select>
+      </div>
+    </div>
+
+    <div class="row mt-3">
+      <div class="col-6">
+        <button class="btn btn-light w-100" (click)="resetFilter()">
+          Limpar Filtros
+        </button>
+      </div>
+      <div class="col-6">
+        <button class="btn btn-primary w-100" (click)="sendFilter()">
+          Filtrar
+        </button>
+      </div>
+    </div>
+  </div>
+</form>

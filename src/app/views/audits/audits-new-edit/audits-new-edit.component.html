@@ -1,0 +1,82 @@
+<div class="card white-content">
+  <div class="card-header color backgroundPrimary">
+    <h4 class="card-title" style="
+          width: 95%;
+          padding: 0px;
+          color: white;
+          padding-top: 10px;
+          font-weight: bold;
+        ">
+      {{ isAdd ? "Nova Auditoria" : "Alterar Auditoria" }}
+    </h4>
+    <button (click)="closeModal()" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+  </div>
+  <div class="card-body">
+    <form [formGroup]="form">
+      <div class="form-group">
+        <div class="form-group form-margintop">
+          <div class="row margin-input">
+            <div class="col-lg-12">
+              <div class="form-group">
+                <label class="form-label" [class.required]="
+                      sendform && !form.controls['description'].valid
+                    ">Descrição<span class="required">*</span></label>
+                <input class="form-control" formControlName="description" type="text"
+                  placeholder="Informe a Descrição" />
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="form-group">
+                <label [class.required]="
+                      sendform && !form.controls['pilot'].valid
+                    ">Piloto<span class="required">*</span></label>
+                <input class="form-control" formControlName="pilot" type="text"
+                  placeholder="Informe o nome do piloto" />
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="form-group">
+                <label [class.required]="
+                      sendform && !form.controls['document'].valid
+                    ">Documento do Piloto<span class="required">*</span></label>
+                <input class="form-control" formControlName="document" type="text"
+                  placeholder="Informe o documento do piloto" />
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="form-group">
+                <label [class.required]="
+                      sendform && !form.controls['license'].valid
+                    ">Licença<span class="required">*</span></label>
+                <input class="form-control" formControlName="license" type="text" placeholder="Informe a Licença" />
+              </div>
+            </div>
+
+            <div class="col-lg-6">
+              <div>
+                <label [class.required]="
+                      sendform && !form.controls['authorization'].valid
+                    ">Autorização<span class="required">*</span></label>
+                <input class="form-control" formControlName="authorization" type="text"
+                  placeholder="Informe a autorização" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="card-footer text-center">
+    <div class="row justify-content-end g-2">
+      <div class="col-lg-3">
+        <button (click)="closeModal()" class="btn btn-light w-100">Cancelar</button>
+      </div>
+      <div class="col-lg-3">
+        <button (click)="save()" class="btn btn-primary w-100">
+          <span *ngIf="!loading">Confirmar</span>
+          <div class="loader-btn" *ngIf="loading"></div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

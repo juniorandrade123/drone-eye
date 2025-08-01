@@ -1,0 +1,39 @@
+<div class="d-flex flex-column h-100 p-3">
+  <div class="d-flex flex-column flex-grow-1">
+    <div class="row h-100 justify-content-center">
+      <div class="col-xxl-7">
+        <div class="row justify-content-center h-100">
+          <div class="col-lg-6 py-lg-5">
+            <div class="card mb-0 p-4 d-flex flex-column h-100 justify-content-center">
+              <h2 class="fw-bold fs-24 text-center">Auditoria AMC</h2>
+              <div class="mb-3">
+                <form [formGroup]="signInForm" (ngSubmit)="login()" class="authentication-form">
+                  <div class="mb-3">
+                    <label class="form-label"
+                      [class.required]="sendForm && !signInForm.controls['email'].valid">E-mail</label>
+                    <input formControlName="email" type="email" class="form-control bg-"
+                      placeholder="Informe seu e-mail">
+                  </div>
+                  <div class="mb-4">
+                    <label class="form-label"
+                      [class.required]="sendForm && !signInForm.controls['password'].valid">Senha</label>
+                    <input type="password" formControlName="password" class="form-control"
+                      placeholder="Informe sua senha">
+                    <a routerLink="/auth/password" class="float-end text-muted text-unline-dashed ms-1 mt-1">Esqueceu a
+                      sua senha?</a>
+                  </div>
+                  <div class="mb-1 text-center d-grid">
+                    <button class="btn btn-soft-primary" type="submit">
+                      <span *ngIf="!loading">Entrar</span>
+                      <div class="loader-btn" *ngIf="loading"></div>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,40 @@
+<app-accordion *ngIf="isApplyFilter || (isLoading || lstImagesPending.length > 0)" [isBackgroundWarning]="true"
+    [startsCollapsed]="true" [isUsingFilter]="true" [isApplyFilter]="isApplyFilter" [title]="'Imagens Pendentes'"
+    (openFilter)="openModalFilter()" style="background-color: white !important; margin-top: 10px">
+    <div class="panel-body">
+        <div class="row" style="overflow-x: auto;" *ngIf="!isLoading">
+            <table class="table align-middle mb-0 table-hover table-centered">
+                <thead class="bg-light-subtle">
+                    <tr class="tr-background">
+                        <th class="p-2" *ngFor="let pending of lstImagesPending">
+                            <div style="display: flex;">
+                                <span class="th-span">{{pending.description}}
+                                </span>
+                            </div>
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td class="border relative text-center p-4" *ngFor="let pending of lstImagesPending">
+                            <div class="cursor-pointer" (click)="openModal(pending.palete, pending.row)">
+                                <img src="{{pending.url}}" height="100" width="100" />
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+                <tbody *ngIf="lstImagesPending.length === 0">
+                    <tr class="no-register frist-td">
+                        <td colspan="100%" class="text-center">
+                            <span> Nenhuma imagem encontrada </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="row" *ngIf="isLoading">
+            <div class="loader-btn mt-4 mb-4"></div>
+        </div>
+    </div>
+</app-accordion>

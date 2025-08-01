@@ -1,0 +1,16 @@
+<div class="filter-menu active" *ngIf="isMenuActive">
+    <div class="d-flex align-items-center bg-secondary p-3 offcanvas-header">
+        <h5 class="text-white m-0">Filtros</h5>
+        <button type="button" class="btn-close btn-close-white ms-auto" (click)="closeFilter()"></button>
+    </div>
+
+    <div class="content-filter h-100">
+        <div class="offcanvas-body p-0 h-100">
+            <ngx-simplebar data-simplebar class="h-100">
+                <div class="p-3 settings-bar">
+                    <ng-content></ng-content>
+                </div>
+            </ngx-simplebar>
+        </div>
+    </div>
+</div>

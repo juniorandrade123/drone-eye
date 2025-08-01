@@ -1,0 +1,89 @@
+<div class="row">
+  <div class="col-xl-12">
+    <div class="card">
+      <div>
+        <div class="table-responsive">
+          <table class="table align-middle mb-0 table-hover table-centered">
+            <thead class="bg-light-subtle">
+              <tr class="text-center">
+                <th></th>
+                <th>Descrição</th>
+                <th>Piloto</th>
+                <th>Licença</th>
+                <th>Documento do Piloto</th>
+                <th>Autorização</th>
+                <th>Data de Criação</th>
+                <th>Imagens</th>
+                <th class="text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody *ngIf="tableList.length === 0 && tableRequestReturned">
+              <tr class="no-register frist-td">
+                <td colspan="100%" class="text-center">
+                  <span> Nenhum registro encontrado </span>
+                </td>
+              </tr>
+            </tbody>
+            <tbody>
+              @for(item of tableList;track $index){
+              <tr class="text-center">
+                <td></td>
+                <td>{{ item.description }}</td>
+                <td>{{ item.pilot }}</td>
+                <td>{{ item.license }}</td>
+                <td>{{ item.document }}</td>
+                <td>{{ item.authorization }}</td>
+                <td>{{ item.created_at | date : "dd/MM/yyyy HH:mm" }}</td>
+                <td style="vertical-align: middle;">
+                  <div class="d-flex gap-2 justify-content-center align-items-center">
+                    <span ngbTooltip="Imagens lidas com sucesso" class="badge bg-success rounded-pill py-2 px-2">
+                      {{ item.status_dict.success || 0 }}
+                    </span>
+
+                    <span ngbTooltip="Imagens pendentes de validação" class="badge bg-warning rounded-pill py-2 px-2">
+                      {{ item.status_dict.waiting || 0 }}
+                    </span>
+
+                    <span ngbTooltip="Imagens lidas com erro" class="badge bg-danger rounded-pill py-2 px-2">
+                      {{ item.status_dict.error || 0 }}
+                    </span>
+                  </div>
+                </td>
+                <td class="text-center" style="display: block ruby;">
+                  <div class="d-flex gap-2">
+                    <a (click)="edit(item)" class="btn btn-soft-primary btn-sm" ngbTooltip="Editar">
+                      <iconify-icon icon="solar:pen-2-broken" class="align-middle fs-18"></iconify-icon>
+                    </a>
+                    <a (click)="remove(item)" class="btn btn-soft-danger btn-sm" ngbTooltip="Deletar">
+                      <iconify-icon icon="solar:trash-bin-minimalistic-2-broken"
+                        class="align-middle fs-18"></iconify-icon>
+                    </a>
+                    <div>
+                      <a routerLink="/audits/map/{{item.id}}" class="btn btn-soft-primary btn-sm" ngbTooltip="Ver Mapa">
+                        <iconify-icon icon="solar:map-linear" class="align-middle fs-18"></iconify-icon>
+                      </a>
+                      <span *ngIf="item.images.length > 0" ngbTooltip="Imagens Pendentes de Validação"
+                        class="position-absolute topbar-badge fs-10 translate-middle badge bg-warning rounded-pill cursor-pointer">
+                        {{item.images.length}}
+                        <span class="visually-hidden">unread messages</span>
+                      </span>
+                    </div>
+                    <img (click)="export(item.id)" class="cursor-pointer" style="width: 32px;"
+                      ngbTooltip="Exportar Excel" src="../../../../assets/images/icon-excel.png">
+                  </div>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <grid-pagination [tableRequestReturned]="tableRequestReturned" [tableListLength]="tableList.length"
+      [totalItemsCountUpdate]="totalItemsCount" [selectedPageIndex]="selectedPageIndex"
+      [itemsPerPageFixed]="itemsPerPageFixed" (pageRequested)="getTableDataByPage($event)"
+      (itemsPerPageRequested)="changeQty($event)">
+    </grid-pagination>
+  </div>
+</div>
