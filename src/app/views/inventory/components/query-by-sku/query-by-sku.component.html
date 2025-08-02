@@ -1,0 +1,177 @@
+<form [formGroup]="form">
+    <div class="card-container">
+        <div class="col-4">
+            <div class="form-group">
+                <label class="form-label">Centro de Distribuição</label>
+                <ng-select placeholder="Selecione o CD" [items]="lstDistributionCenter" bindLabel="description"
+                    bindValue="value" formControlName="distributionCenter" [clearable]="false">
+                </ng-select>
+            </div>
+        </div>
+
+        <div class="col-4">
+            <div class="form-group">
+                <label class="form-label">SKU</label>
+                <input class="form-control" formControlName="sku" type="text" placeholder="Digite o SKU..." />
+            </div>
+        </div>
+
+        <div class="col-4">
+            <div class="form-group">
+                <label class="form-label">Período</label>
+                <ng-select placeholder="Selecione o período" [items]="lstPeriods" bindLabel="description"
+                    bindValue="value" formControlName="period" [clearable]="false">
+                </ng-select>
+            </div>
+        </div>
+    </div>
+
+    @for(item of lstSkus;track $index){
+    <div class="sku-card mt-3">
+        <div class="row">
+            <div class="col-10">
+                <div class="card-header mt-1">
+                    <div class="sku-info margin-left">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="lucide lucide-package h-5 w-5 text-blue-600">
+                            <path
+                                d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z">
+                            </path>
+                            <path d="M12 22V12"></path>
+                            <path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path>
+                            <path d="m7.5 4.27 9 5.15"></path>
+                        </svg>
+                        <strong>SKU</strong><strong>{{item.codigo}}</strong>
+                        @if (item.status === 0) {
+                        <span class="badge black">Em estoque</span>
+                        } @else if (item.status === 1) {
+                        <span class="badge default">Baixo Estoque</span>
+                        } @else if (item.status === 2) {
+                        <span class="badge red">Sem estoque</span>
+                        }
+                    </div>
+                </div>
+                <div class="product-name mt-1 margin-left">Produto {{item.produto}}</div>
+            </div>
+            <div class="col-2 justify-buttons">
+                <div class="action-buttons">
+                    <button class="btn"><span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="24"
+                                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye h-4 w-4">
+                                <path
+                                    d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0">
+                                </path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg></span> Ver Fotos</button>
+                    <button class="btn"><span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="24"
+                                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin h-4 w-4">
+                                <path
+                                    d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0">
+                                </path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg></span> Localizar</button>
+                </div>
+
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-3 margin-left">
+                <span>CD:</span>
+                <br />
+                <span class="spanlabel">{{item.cd}}</span>
+            </div>
+            <div class="col-3">
+                <span>Localização:</span>
+                <br />
+                <span class="spanlabel">{{item.localizacao}}</span>
+            </div>
+            <div class="col-2">
+                <span>Palete:</span>
+                <br />
+                <span class="spanlabel">{{item.palete}}</span>
+            </div>
+            <div class="col-2">
+                <span>Quantidade:</span>
+                <br />
+                <span class="spanlabel">{{item.quantidade}} unidade(s)</span>
+            </div>
+        </div>
+        <div class="row mb-1 mt-3">
+            <div class="col-3 margin-left">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="lucide lucide-calendar h-4 w-4">
+                    <path d="M8 2v4"></path>
+                    <path d="M16 2v4"></path>
+                    <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+                    <path d="M3 10h18"></path>
+                </svg>
+                <span style="margin-left: 10px;">Inventário em: </span> <span>{{item.dataInventario | date:
+                    'dd/MM/yyyy'}}</span>
+            </div>
+            <div class="col-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="lucide lucide-camera h-4 w-4">
+                    <path
+                        d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z">
+                    </path>
+                    <circle cx="12" cy="13" r="3"></circle>
+                </svg>
+                <span style="margin-left: 10px;">{{item.quantidadeFotos}}</span> <span> foto(s)</span>
+            </div>
+        </div>
+    </div>
+    }
+
+    @if (lstSkus.length === 0) {
+    <div class="sku-card mt-3">
+        <div class="row text-center p-14">
+            <div class="col-12">
+                <span>Nenhuma informação encontrada</span>
+            </div>
+        </div>
+    </div>
+    }
+
+    <div class="sku-card mt-3">
+        <div class="row mt-2">
+            <div class="col-12">
+                <div class="text-content">
+                    <h2>Resumo da Consulta</h2>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3 mb-2">
+            <div class="col-3">
+                <div class="resumo-card encontrados">
+                    <div class="quantidade">{{resumQuery.qtdEncontrados}}</div>
+                    <div class="descricao">Itens encontrados</div>
+                </div>
+            </div>
+
+            <div class="col-3">
+                <div class="resumo-card em-estoque">
+                    <div class="quantidade">{{resumQuery.qtdEmEstoque}}</div>
+                    <div class="descricao">Em estoque</div>
+                </div>
+            </div>
+
+            <div class="col-3">
+                <div class="resumo-card baixo-estoque">
+                    <div class="quantidade">{{resumQuery.qtdBaixoEstoque}}</div>
+                    <div class="descricao">Baixao estoque</div>
+                </div>
+            </div>
+
+            <div class="col-3">
+                <div class="resumo-card sem-estoque">
+                    <div class="quantidade">{{resumQuery.qtdSemEstoque}}</div>
+                    <div class="descricao">Sem estoque</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>

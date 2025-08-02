@@ -66,6 +66,7 @@
 
 .form-group {
   margin-bottom: 1rem !important;
+  margin-left: 1em;
 }
 
 .ng-select {
@@ -148,4 +149,22 @@
 
 .toast-container {
   position: fixed !important;
+}
+
+
+.card-container {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.card-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
