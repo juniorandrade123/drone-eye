@@ -10,5 +10,5 @@ import { GridViewComponent } from './components/grid-view/grid-view.component';
   styleUrl: './inventory.component.scss',
 })
 export class InventoryComponent {
-  selected: 'sku' | 'grid' = 'sku';
+  selected: 'sku' | 'grid' = 'grid';
 }

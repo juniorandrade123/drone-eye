@@ -64,3 +64,9 @@ export const skuResum: SkuResum = {
   qtdBaixoEstoque: 1,
   qtdSemEstoque: 1,
 };
+
+export const streets: Selected[] = [
+  { value: 1, description: 'A-10' },
+  { value: 2, description: 'A-11' },
+  { value: 3, description: 'B-05' },
+];

@@ -1,27 +1,29 @@
 <form [formGroup]="form">
     <div class="card-container">
-        <div class="col-4">
-            <div class="form-group">
-                <label class="form-label">Centro de Distribuição</label>
-                <ng-select placeholder="Selecione o CD" [items]="lstDistributionCenter" bindLabel="description"
-                    bindValue="value" formControlName="distributionCenter" [clearable]="false">
-                </ng-select>
+        <div class="row margin-input">
+            <div class="col-4">
+                <div class="form-group">
+                    <label class="form-label">Centro de Distribuição</label>
+                    <ng-select placeholder="Selecione o CD" [items]="lstDistributionCenter" bindLabel="description"
+                        bindValue="value" formControlName="distributionCenter" [clearable]="false">
+                    </ng-select>
+                </div>
             </div>
-        </div>
 
-        <div class="col-4">
-            <div class="form-group">
-                <label class="form-label">SKU</label>
-                <input class="form-control" formControlName="sku" type="text" placeholder="Digite o SKU..." />
+            <div class="col-4">
+                <div class="form-group">
+                    <label class="form-label">SKU</label>
+                    <input class="form-control" formControlName="sku" type="text" placeholder="Digite o SKU..." />
+                </div>
             </div>
-        </div>
 
-        <div class="col-4">
-            <div class="form-group">
-                <label class="form-label">Período</label>
-                <ng-select placeholder="Selecione o período" [items]="lstPeriods" bindLabel="description"
-                    bindValue="value" formControlName="period" [clearable]="false">
-                </ng-select>
+            <div class="col-4">
+                <div class="form-group">
+                    <label class="form-label">Período</label>
+                    <ng-select placeholder="Selecione o período" [items]="lstPeriods" bindLabel="description"
+                        bindValue="value" formControlName="period" [clearable]="false">
+                    </ng-select>
+                </div>
             </div>
         </div>
     </div>
