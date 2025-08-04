@@ -7,7 +7,7 @@
      z-index: 1005;
      position: sticky;
      transition: all 0.3s ease-in-out;
-     height: $topbar-height;
+     height: 80px;
      background-color: $topbar-bg;
      padding-left: $main-nav-width;
      box-shadow: var(--#{$prefix}box-shadow);
@@ -58,7 +58,7 @@
           .button-toggle-menu {
                border: none;
                border-radius: 0;
-               color: $topbar-item-color;
+               color: black;
                background-color: transparent;
 
 

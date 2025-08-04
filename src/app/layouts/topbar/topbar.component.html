@@ -1,83 +1,79 @@
 <header class="topbar">
   <div class="container-fluid">
     <div class="navbar-header">
-      <div class="d-flex align-items-center">
+      <div class="d-flex align-items-center mt-1">
         <div class="topbar-item">
           <button type="button" class="button-toggle-menu me-2" (click)="changeSidebarSize()">
-            <iconify-icon icon="solar:hamburger-menu-outline" class="fs-24 align-middle"></iconify-icon>
+            <iconify-icon icon="tabler:layout-sidebar" class="fs-20 align-middle"></iconify-icon>
           </button>
+        </div>
+        <i class="bi bi-clipboard me-3 fs-5 text-dark"></i>
+
+        <!-- Logo e texto -->
+        <div class="d-flex align-items-center">
+          <div class="bg-primary text-white rounded-2 fw-bold d-flex align-items-center justify-content-center me-2"
+            style="width: 2.5rem; height: 2.5rem; font-size: .875rem;">
+            FC
+          </div>
+          <div>
+            <div class="fw-bold text-primary text-2xl">FLYCOUNT</div>
+            <div class="small text-gray-600">Controle inteligente de SKUs com tecnologia de drones e IA</div>
+          </div>
         </div>
       </div>
 
-      <div class="d-flex align-items-center gap-1">
-        <div class="topbar-item">
-          <button type="button" class="topbar-button" (click)="changeTheme()" id="light-dark-mode">
-            <i class="bx bx-moon fs-24 align-middle"></i>
-          </button>
-        </div>
-        <div ngbDropdown class="dropdown topbar-item">
-          <button ngbDropdownToggle type="button" class="topbar-button position-relative arrow-none"
-            id="page-header-notifications-dropdown">
-            <i class="bx bx-bell fs-24 align-middle"></i>
-            <span
-              class="position-absolute topbar-badge fs-10 translate-middle badge bg-danger rounded-pill">{{notificationList.length}}<span
-                class="visually-hidden">unread messages</span></span>
-          </button>
-          <div ngbDropdownMenu class="dropdown-menu py-0 dropdown-lg dropdown-menu-end"
-            aria-labelledby="page-header-notifications-dropdown">
-            <div class="p-3 border-top-0 border-start-0 border-end-0 border-dashed border">
-              <div class="row align-items-center">
-                <div class="col">
-                  <h6 class="m-0 fs-16 fw-semibold"> Notificações</h6>
-                </div>
-                <div class="col-auto">
-                  <a href="javascript: void(0);" class="text-dark text-decoration-underline">
-                    <small>Limpar</small>
-                  </a>
-                </div>
-              </div>
-            </div>
-            <ngx-simplebar data-simplebar style="max-height: 280px;">
+      <div class="d-flex align-items-center gap-2 mt-1">
+        <span
+          class="badge rounded-pill border border-success text-success bg-white d-flex align-items-center px-3 py-1">
+          <i class="me-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="lucide lucide-camera h-3 w-3 mr-1">
+              <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z">
+              </path>
+              <circle cx="12" cy="13" r="3"></circle>
+            </svg>
+          </i> IA + OpenCV
+        </span>
+        <span
+          class="badge rounded-pill border border-primary text-primary bg-white d-flex align-items-center px-3 py-1">
+          <i class="me-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="lucide lucide-map-pin h-3 w-3 mr-1">
+              <path
+                d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0">
+              </path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+          </i> Multi-CDs
+        </span>
+        <span class="badge rounded-pill border border-purple text-purple bg-white d-flex align-items-center px-3 py-1">
+          <i class="me-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="lucide lucide-package h-3 w-3 mr-1">
+              <path
+                d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z">
+              </path>
+              <path d="M12 22V12"></path>
+              <path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path>
+              <path d="m7.5 4.27 9 5.15"></path>
+            </svg>
+          </i> Controle Total
+        </span>
 
-              @for (notify of notificationList; track $index) {
-              <a href="javascript:void(0);" class="dropdown-item py-3 border-bottom text-wrap">
-                <div class="d-flex">
-                  <div class="flex-shrink-0">
-                    <div class="avatar-sm me-2">
-                      <span class="avatar-title bg-soft-info text-info fs-20 rounded-circle">
-                        S
-                      </span>
-                    </div>
-                  </div>
-                  <div class="flex-grow-1">
-                    <p class="mb-0 text-wrap">{{ notify.content }}</p>
-                  </div>
-                </div>
-              </a>
-              }
-            </ngx-simplebar>
-            <div class="text-center py-3">
-              <a href="javascript:void(0);" class="btn btn-primary btn-sm">Todas as notificações <i
-                  class="bx bx-right-arrow-alt ms-1"></i></a>
-            </div>
-          </div>
-        </div>
-        <div ngbDropdown class="dropdown topbar-item">
-          <a ngbDropdownToggle type="button" class="topbar-button arrow-none" id="page-header-user-dropdown">
-            <span class="d-flex align-items-center">
-              <div class="avatar-sm me-2">
-                <span class="avatar-title bg-soft-info text-info fs-20 rounded-circle">
-                  S
-                </span>
-              </div>
-            </span>
-          </a>
-          <div ngbDropdownMenu class="dropdown-menu dropdown-menu-end">
-            <a class="dropdown-item text-danger" role="button" (click)="logout()">
-              <i class="bx bx-log-out fs-18 align-middle me-1"></i><span class="align-middle">Logout</span>
-            </a>
-          </div>
-        </div>
+        <button class="btn btn-outline-secondary ms-3 d-flex align-items-center">
+          <i class="me-2 btn-sair">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="lucide lucide-log-out h-4 w-4">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" x2="9" y1="12" y2="12"></line>
+            </svg>
+          </i> Sair
+        </button>
       </div>
     </div>
   </div>

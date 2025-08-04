@@ -15,12 +15,23 @@ export const MENU: MenuItem[] = [
   {
     key: 'general',
     label: 'Sistema de Inventário',
-  isTitle: true,
+    isTitle: true,
   },
   {
     key: 'dashboards',
-    icon: 'solar:chart-linear',
+    icon: 'lucide:home',
     label: 'Dashboard',
-    link:'/index'
-  }
+    link: '/index'
+  },
+  {
+    key: 'adm',
+    label: 'Administração',
+    isTitle: true,
+  },
+    {
+    key: 'usuarios',
+    icon: 'tabler:users',
+    label: 'Usuários',
+    link: '/usuarios'
+  },
 ]
