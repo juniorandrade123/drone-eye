@@ -2,6 +2,11 @@
 // _vertical.scss
 //
 
+.main-nav {
+    background-color: #fafafa !important;
+     border-right: 1px solid #e2e2e2 !important;
+}
+
 // Logo
 .logo-box {
      position: sticky;
@@ -85,15 +90,13 @@
 
           .menu-title {
                cursor: default;
-               font-size: 11px;
-               letter-spacing: 0.05em;
-               text-transform: uppercase;
-               color: $main-nav-item-color;
-               opacity: .6;
-               font-weight: $font-weight-semibold;
-               padding: $main-nav-item-padding-y calc($main-nav-item-padding-x * 1.25);
-               transition: all 0.3s ease-in-out;
-               height: 36px;
+               font-size: .75rem;
+               color: 240 5.3% 26.1%;
+               padding-left: 1rem;
+               padding-right: .5rem;
+               line-height: 1rem;
+               margin-top: 2em;
+               color: #3F3F46 !important;
           }
 
           .navbar-nav {
@@ -592,4 +595,8 @@ html[data-menu-color="brand"] {
                }
           }
      }
+}
+
+.nav-text {
+     color: #3F3F46 !important;
 }

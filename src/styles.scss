@@ -110,3 +110,33 @@ div {
 svg {
     vertical-align: baseline;
 }
+
+.text-gray-600 {
+    --tw-text-opacity: 1;
+    color: rgb(75 85 99 / var(--tw-text-opacity, 1));
+}
+
+.text-sm {
+    font-size: .875rem;
+    line-height: 1.25rem;
+}
+.py-2 {
+    padding-top: .5rem;
+    padding-bottom: .5rem;
+}
+
+.px-4 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.btn-outline-secondary {
+    background-color: white !important;
+    border-color: #e2e8f0 !important;
+    color: black !important;
+    font-weight: 500;
+}
+
+.btn-sair {
+    margin-top: 0.3em;
+}
