@@ -19,7 +19,7 @@ export const MENU: MenuItem[] = [
   },
   {
     key: 'dashboards',
-    icon: 'solar:chart-linear',
+    icon: 'lucide:home',
     label: 'Dashboard',
     link:'/index'
   }
