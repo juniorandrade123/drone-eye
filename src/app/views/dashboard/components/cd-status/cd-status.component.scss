@@ -1,3 +1,7 @@
+:root {
+  font-family: Inter;
+}
+
 .dot {
   width: 10px;
   height: 10px;
@@ -14,22 +18,7 @@
   }
 }
 
-.tracking-tight {
-    letter-spacing: -.025em;
-}
-.leading-none {
-    line-height: 1;
-}
-.font-semibold {
-    font-weight: 600;
-}
-.text-2xl {
-    font-size: 1.5rem;
-    line-height: 2rem;
-}
-.gap-2 {
-    gap: .5rem;
-}
-.items-center {
-    align-items: center;
+
+.font-medium {
+  font-size: 1.2em;
 }
