@@ -26,3 +26,117 @@
 .text-orange-600 {
     color: rgb(234 88 12);
 }
+
+
+h3 {
+    font-family: Inter;
+}
+
+h4 {
+    font-family: Inter;
+}
+
+h5 {
+    font-family: Inter;
+}
+
+p {
+    font-family: Inter;
+}
+
+span {
+    font-family: Inter;
+}
+
+div {
+    font-family: Inter;
+}
+
+.bg-danger-subtle {
+    background-color: transparent !important;
+    border: 1px solid var(--bs-danger-bg-subtle);
+}
+
+.bg-warning-subtle {
+    background-color: transparent !important;
+    border: 1px solid var(--bs-warning-bg-subtle);
+}
+
+.bg-primary-subtle {
+    background-color: transparent !important;
+    border: 1px solid var(--bs-primary-bg-subtle);
+}
+
+.rounded-lg {
+    border-radius: .5em;
+}
+
+.font-medium {
+    font-weight: 500;
+}
+
+.text-2xl {
+    font-size: 1.5rem;
+}
+
+.tracking-tight {
+    letter-spacing: -.025em;
+}
+
+.leading-none {
+    line-height: 1;
+}
+
+.font-semibold {
+    font-weight: 600;
+}
+
+.gap-2 {
+    gap: .5rem;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.w-5 {
+    width: 1.25rem;
+}
+
+.h-5 {
+    height: 1.25rem;
+}
+
+svg {
+    vertical-align: baseline;
+}
+
+.text-gray-600 {
+    --tw-text-opacity: 1;
+    color: rgb(75 85 99 / var(--tw-text-opacity, 1));
+}
+
+.text-sm {
+    font-size: .875rem;
+    line-height: 1.25rem;
+}
+.py-2 {
+    padding-top: .5rem;
+    padding-bottom: .5rem;
+}
+
+.px-4 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.btn-outline-secondary {
+    background-color: white !important;
+    border-color: #e2e8f0 !important;
+    color: black !important;
+    font-weight: 500;
+}
+
+.btn-sair {
+    margin-top: 0.3em;
+}
