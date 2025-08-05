@@ -13,8 +13,8 @@ export const VIEW_ROUTES: Route[] = [
       import('./audits/audits.route').then((mod) => mod.AUDITS_ROUTES),
   },
   {
-    path: 'inventory',
+    path: 'inventario',
     loadChildren: () =>
-      import('./inventory/inventory.route').then((mod) => mod.INVENTORY_ROUTES),
+      import('./inventario/inventario.route').then((mod) => mod.INVENTARIO_ROUTES),
   },
 ];

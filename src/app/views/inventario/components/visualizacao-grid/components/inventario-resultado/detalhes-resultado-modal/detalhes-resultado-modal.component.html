@@ -1,0 +1,74 @@
+<div class="card white-content">
+    <div class="modal-header">
+        <div class="modal-title">
+            <span class="icone" [innerHTML]="iconeCameraAzul"></span>
+            Foto do Código de Barras - PAL-{{dadosPalete.posicao}}
+        </div>
+        <button (click)="fecharModal()" type="button" class="btn-close" data-bs-dismiss="modal"
+            aria-label="Close"></button>
+    </div>
+    <div class="card-body">
+        @if (dadosPalete.status === 0) {
+        <div class="badge mb-3 success">Código Lido com Sucesso</div>
+        } @else {
+        <div class="badge mb-3 warning">Falha na Leitura do Código</div>
+        }
+        <div class="image-container mb-3">
+            <img src="{{dadosPalete.caminhoImagem}}">
+        </div>
+
+
+        @if (dadosPalete.status === 0) {
+        <p class="info-text">
+            Esta imagem foi processada com sucesso pela IA e o código de barras foi
+            identificado.
+        </p>
+        } @else {
+        <p class="info-text">
+            Esta imagem não pôde ser processada adequadamente. O código de barras não foi identificado
+            devido a problemas de qualidade, ângulo ou iluminação
+        </p>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="form-group">
+                    <label class="form-label">Código Manual</label>
+                    <input class="form-control" [(ngModel)]="codigoManual" type="text" style="margin-bottom: 5px;"
+                        placeholder="Digite o código manualmente..." />
+                    <span style="font-size: 11px;">Digite o código de barras que não foi possível ler
+                        automaticamente</span>
+                </div>
+            </div>
+        </div>
+        }
+    </div>
+    <div class="card-footer text-center">
+        @if (dadosPalete.status === 1) {
+        <div class="row">
+            <div class="col-lg-3">
+                <div class="col-lg-9">
+                    <button (click)="fecharModal()" class="btn btn-light w-100">Fechar</button>
+                </div>
+            </div>
+
+            <div class="col-lg-9 flex justify-content-end">
+                <div class="col-lg-2" *ngIf="dadosPalete.status === 1">
+                    <button (click)="limpar()" class="btn btn-light w-100">Limpar</button>
+                </div>
+                <div class="col-lg-3 ml10" *ngIf="dadosPalete.status === 1">
+                    <button [disabled]="!codigoManual" class="btn btn-success w-100" (click)="salvarCodigo()">
+                        <span *ngIf="!loading">Salvar Código</span>
+                        <div class="loader-btn" *ngIf="loading"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+        } @else {
+        <div class="row justify-content-end g-2">
+            <div class="col-lg-3">
+                <button (click)="fecharModal()" class="btn btn-light w-100">Fechar</button>
+            </div>
+        </div>
+        }
+    </div>
+</div>

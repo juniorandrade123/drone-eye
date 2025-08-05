@@ -1,8 +1,17 @@
-.text-content h2 {
+.card-content {
+    width: 98%;
+}
+
+.text-content h2,
+h3 {
     margin: 0;
     font-size: 20px;
     font-weight: 600;
     color: #0f172a;
+}
+
+h3 {
+    font-size: 14px !important;
 }
 
 .text-content p {
@@ -28,26 +37,34 @@
     align-items: center;
     gap: 4px;
     color: #1f2937;
+}
 
-    svg {
+.icone {
+    ::ng-deep svg {
         width: 16px;
         vertical-align: middle;
     }
 }
 
-.status.lido svg {
+.icone-localizacao {
+    ::ng-deep svg {
+        color: #d1d5db;
+    }
+}
+
+.status.lido::ng-deep svg {
     color: #16a34a;
 }
 
-.status.nao-lido svg {
+.status.nao-lido::ng-deep svg {
     color: #d97706;
 }
 
-.status.vazio svg {
+.status.vazio::ng-deep svg {
     color: #9ca3af;
 }
 
-.status.editar svg {
+.status.editar::ng-deep svg {
     color: #2563eb;
 }
 

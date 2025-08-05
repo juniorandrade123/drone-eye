@@ -22,5 +22,11 @@ export const MENU: MenuItem[] = [
     icon: 'solar:chart-linear',
     label: 'Dashboard',
     link:'/index'
+  },
+  {
+    key: 'inventario',
+    icon: 'solar:chart-linear',
+    label: 'Consulta Inventário',
+    link:'/inventario/index'
   }
 ]

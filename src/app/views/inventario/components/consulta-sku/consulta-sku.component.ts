@@ -8,16 +8,17 @@ import {
 } from '@angular/forms';
 import { Selected } from '@core/model/selected';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { distributionCenter, periods, skuResum, skus } from '@views/inventory/data';
-import { SkuDto, SkuResum } from './model/sku';
+import { distributionCenter, periods, skuResum, skus } from '@views/inventario/data';
+import { SkuDto, SkuResum } from '../model/sku';
+import { ResultadoListaComponent } from './components/resultado-lista.component';
 
 @Component({
-  selector: 'app-query-by-sku',
-  imports: [CommonModule, NgSelectModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './query-by-sku.component.html',
-  styleUrl: './query-by-sku.component.scss',
+  selector: 'app-consulta-sku',
+  imports: [CommonModule, NgSelectModule, FormsModule, ReactiveFormsModule, ResultadoListaComponent],
+  templateUrl: './consulta-sku.component.html',
+  styleUrl: './consulta-sku.component.scss',
 })
-export class QueryBySkuComponent {
+export class ConsultaSkuComponent {
   lstDistributionCenter: Selected[] = distributionCenter;
   lstPeriods: Selected[] = periods;
 

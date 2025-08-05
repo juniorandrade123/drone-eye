@@ -1,0 +1,43 @@
+<div class="card-container mt-3">
+    <div class="row margin-input">
+        <div class="col-12 mt-1 mb-3">
+            <div class="card-content">
+                <span class="icon">
+                    <span [innerHTML]="iconeRelogio"></span>
+                </span>
+                <div class="text-content">
+                    <h2>Indicadores de Tempo - Inventário</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 mt-1">
+            <div class="indicadores">
+                <div class="item azul-claro">
+                    <strong>{{indicador.concluido}}%</strong>
+                    <span>Concluído</span>
+                </div>
+                <div class="item verde-claro">
+                    <strong>{{indicador.tempoDecorrido}}h</strong>
+                    <span>Tempo Decorrido</span>
+                </div>
+                <div class="item amarelo-claro">
+                    <strong>{{indicador.tempoRestante}}h</strong>
+                    <span>Tempo Restante</span>
+                </div>
+                <div class="item roxo-claro">
+                    <strong>{{indicador.tempoTotalEstimado}}h</strong>
+                    <span>Tempo Total Est.</span>
+                </div>
+                <div class="item azul">
+                    <strong>{{indicador.paletesHora}}</strong>
+                    <span>Paletes/Hora</span>
+                </div>
+                <div class="item laranja">
+                    <strong>{{indicador.ruasHora}}</strong>
+                    <span>Ruas/Hora</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
