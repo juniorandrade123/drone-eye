@@ -1,0 +1,64 @@
+version: "3.8"
+name: amcfly
+
+services:
+  amcfly_app_dev:
+    container_name: amcfly_app_dev
+    image: ghcr.io/tria-software/amcfly.app:${TAG:-latest}
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 512M
+        reservations:
+          cpus: "0.50"
+          memory: 256M
+    ports:
+      - "${APP_PORT:-15551}:${PORT:-80}"
+    env_file:
+      - .env
+    networks:
+      - application-network
+
+  amcfly_app_hml:
+    container_name: amcfly_app_hml
+    image: ghcr.io/tria-software/amcfly.app:${TAG:-latest}
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 512M
+        reservations:
+          cpus: "0.50"
+          memory: 256M
+    ports:
+      - "${APP_PORT:-15551}:${PORT:-80}"
+    env_file:
+      - .env
+    networks:
+      - application-network
+
+  amcfly_app_prod:
+    container_name: amcfly_app_prod
+    image: ghcr.io/tria-software/amcfly.app:${TAG:-latest}
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 512M
+        reservations:
+          cpus: "0.50"
+          memory: 256M
+    ports:
+      - "${APP_PORT:-15552}:${PORT:-80}"
+    env_file:
+      - .env
+    networks:
+      - application-network
+
+networks:
+  application-network:
+    external: true

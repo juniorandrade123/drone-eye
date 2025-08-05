@@ -1,0 +1,115 @@
+trigger:
+  branches:
+    include:
+      - desenvolvimento
+      - homologacao
+      - producao
+
+name: $(date:yyyyMMdd)$(rev:.r)
+
+# Importa variável group com base na branch
+variables:
+  - ${{ if eq(variables['Build.SourceBranchName'], 'desenvolvimento') }}:
+      - group: env-desenvolvimento
+  - ${{ if eq(variables['Build.SourceBranchName'], 'homologacao') }}:
+      - group: env-homologacao
+  - ${{ if eq(variables['Build.SourceBranchName'], 'producao') }}:
+      - group: env-producao
+
+  - name: DOCKERFILE_PATH
+    value: Dockerfile
+
+stages:
+  - stage: Build
+    displayName: "Build App Artifact"
+    jobs:
+      - job: BuildApp
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - checkout: self
+
+          - task: CopyFiles@2
+            displayName: Copy .env.template and docker-compose.template.yml
+            inputs:
+              SourceFolder: "$(Build.SourcesDirectory)"
+              Contents: |
+                .env.template
+                docker-compose.template.yml
+              TargetFolder: "$(Build.ArtifactStagingDirectory)"
+
+          - script: echo $(Build.BuildId) > $(Build.ArtifactStagingDirectory)/image_tag.txt
+            displayName: Save image tag
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: $(Build.ArtifactStagingDirectory)
+              ArtifactName: art-app
+
+  - stage: Docker
+    displayName: "Build Docker Image and Push"
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: BuildDocker
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - checkout: self
+
+          - task: Docker@2
+            inputs:
+              containerRegistry: GitHubContainerRegistry
+              repository: $(IMAGE_NAME)
+              command: buildAndPush
+              Dockerfile: $(DOCKERFILE_PATH)
+              tags: |
+                latest
+                $(Build.BuildId)
+
+  - stage: Deploy
+    displayName: "Deploy to Linux Agent"
+    dependsOn: Docker
+    condition: succeeded()
+    jobs:
+      - job: DeployToHost
+        pool:
+          name: $(AgentName) # Defina o agente correto por branch, se necessário
+        steps:
+          - download: current
+            artifact: art-app
+
+          - task: replacetokens@5
+            displayName: Replace tokens in .env.template
+            inputs:
+              targetFiles: "$(Pipeline.Workspace)/art-app/.env.template"
+              encoding: "auto"
+              writeBOM: true
+              actionOnMissing: "warn"
+              keepToken: false
+              tokenPrefix: "#{"
+              tokenSuffix: "}#"
+
+          - task: Bash@3
+            displayName: Start container
+            inputs:
+              targetType: inline
+              workingDirectory: "$(Pipeline.Workspace)/art-app"
+              script: |
+                set -e
+
+                export TAG=$(cat image_tag.txt | xargs)
+                echo "Usando tag: $TAG"
+
+                echo $(GH_PAT) | docker login ghcr.io -u $(GH_UserName) --password-stdin
+
+                cp .env.template .env
+                cp docker-compose.template.yml docker-compose.yml
+
+                docker compose up -d amcfly_app_${APP_ENV}
+
+          - task: Bash@3
+            displayName: Docker system prune
+            inputs:
+              targetType: inline
+              script: docker system prune -f
