@@ -1,0 +1,26 @@
+version: '3.8'
+name: 
+
+services:
+  om30.frontend:
+    container_name: flycount-frontend
+    image: ghcr.io/tria-software/flycount.frontend:${TAG:-latest}
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 512M
+        reservations:
+          cpus: "0.50"
+          memory: 256M
+    ports:
+      - "${FRONTEND_PORT:-15552}:${PORT:-15552}"
+    networks:
+      - om30-network
+    env_file:
+      - .env
+
+networks:
+  om30-network:
+    external: true
