@@ -1,0 +1,19 @@
+export const TOKEN_KEY = "@mac-hub-token";
+export const USER_KEY = "@mac-hub-usuario";
+export const isAuthenticated = () => sessionStorage.getItem(TOKEN_KEY) !== null;
+export const getToken = () => sessionStorage.getItem(TOKEN_KEY);
+export const login = (token: string, user: any) => {
+    sessionStorage.setItem(TOKEN_KEY, token);
+    sessionStorage.setItem(USER_KEY, user);
+};
+export const logout = () => {
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(USER_KEY);
+};
+
+export const buscaEmpresaId = () => {
+    const session = JSON.parse(sessionStorage.getItem(USER_KEY) || '');
+    if (!session) return '';
+
+    return session.empresa.id;
+}

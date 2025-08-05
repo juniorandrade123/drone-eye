@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pencil, Trash2, Users, Shield, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { UsuarioService } from '@/api/services';
+import moment from "moment";
 
 interface Usuario {
   id: string;
@@ -18,38 +20,40 @@ interface Usuario {
 }
 
 const CadastroUsuarios = () => {
-  const [usuarios, setUsuarios] = useState<Usuario[]>([
-    {
-      id: "1",
-      nome: "João Silva",
-      email: "joao@empresa.com",
-      perfil: "administrador",
-      dataCriacao: "2024-01-15",
-      status: "ativo"
-    },
-    {
-      id: "2",
-      nome: "Maria Santos",
-      email: "maria@empresa.com",
-      perfil: "logistica",
-      dataCriacao: "2024-01-20",
-      status: "ativo"
-    }
-  ]);
-  
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
     senha: "",
     perfil: "" as "administrador" | "logistica" | ""
   });
-  
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const { toast } = useToast();
 
+  useEffect(() => {
+    getUsers();
+  }, []);
+
+  const getUsers = async () => {
+    const apiResponse = await UsuarioService.getUsers();
+    if (apiResponse.ok) {
+      const users = apiResponse.data.map((u: any) => {
+        return {
+          id: u.id,
+          nome: u.nome,
+          email: u.email,
+          dataCriacao: u.criado_em,
+          status: "ativo"
+        } as Usuario;
+      });
+      setUsuarios(users);
+    }
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.nome || !formData.email || !formData.perfil || (!editingId && !formData.senha)) {
       toast({
         title: "Erro",
@@ -60,8 +64,8 @@ const CadastroUsuarios = () => {
     }
 
     if (editingId) {
-      setUsuarios(usuarios.map(usuario => 
-        usuario.id === editingId 
+      setUsuarios(usuarios.map(usuario =>
+        usuario.id === editingId
           ? { ...usuario, nome: formData.nome, email: formData.email, perfil: formData.perfil as "administrador" | "logistica" }
           : usuario
       ));
@@ -108,8 +112,8 @@ const CadastroUsuarios = () => {
   };
 
   const toggleStatus = (id: string) => {
-    setUsuarios(usuarios.map(usuario => 
-      usuario.id === id 
+    setUsuarios(usuarios.map(usuario =>
+      usuario.id === id
         ? { ...usuario, status: usuario.status === "ativo" ? "inativo" : "ativo" }
         : usuario
     ));
@@ -150,7 +154,7 @@ const CadastroUsuarios = () => {
                   type="text"
                   placeholder="Ex: João Silva"
                   value={formData.nome}
-                  onChange={(e) => setFormData({...formData, nome: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                   required
                 />
               </div>
@@ -161,7 +165,7 @@ const CadastroUsuarios = () => {
                   type="email"
                   placeholder="Ex: joao@empresa.com"
                   value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
                 />
               </div>
@@ -174,13 +178,13 @@ const CadastroUsuarios = () => {
                   type="password"
                   placeholder="Digite a senha"
                   value={formData.senha}
-                  onChange={(e) => setFormData({...formData, senha: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
                   required={!editingId}
                 />
               </div>
               <div>
                 <Label htmlFor="perfil">Perfil de Usuário</Label>
-                <Select value={formData.perfil} onValueChange={(value) => setFormData({...formData, perfil: value as "administrador" | "logistica"})}>
+                <Select value={formData.perfil} onValueChange={(value) => setFormData({ ...formData, perfil: value as "administrador" | "logistica" })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o perfil" />
                   </SelectTrigger>
@@ -228,7 +232,9 @@ const CadastroUsuarios = () => {
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">{usuario.email}</p>
-                    <p className="text-xs text-muted-foreground">Criado em: {usuario.dataCriacao}</p>
+                    <p className="text-xs text-muted-foreground">Criado em: {moment(usuario.dataCriacao).format(
+                      "DD/MM/YYYY HH:mm:ss"
+                    )}</p>
                   </div>
                   <div className="flex gap-2">
                     <Button

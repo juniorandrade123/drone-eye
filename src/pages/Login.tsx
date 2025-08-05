@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { LoginService } from '@/api/services';
+import { login } from "../api/config/auth";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -15,26 +17,28 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    
-    // Simulação de login - em produção, conectar com Supabase
-    setTimeout(() => {
-      if (email && password) {
-        toast({
-          title: "Login realizado com sucesso!",
-          description: "Bem-vindo ao FLYCOUNT",
-        });
-        navigate("/");
-      } else {
-        toast({
-          title: "Erro no login",
-          description: "Por favor, preencha todos os campos",
-          variant: "destructive",
-        });
-      }
-      setIsLoading(false);
-    }, 1000);
+    await authenticate(email, password);
   };
+
+  async function authenticate(user: string, password: string) {
+    setIsLoading(true);
+    const apiResponse = await LoginService.login({ email: user, senha: password });
+    if (apiResponse.ok) {
+      login(apiResponse.data.token, JSON.stringify(apiResponse.data));
+      toast({
+        title: "Login realizado com sucesso!",
+        description: "Bem-vindo ao FLYCOUNT",
+      });
+      navigate("/");
+    } else {
+      toast({
+        title: "Erro no login",
+        description: "Por favor, preencha todos os campos",
+        variant: "destructive",
+      });
+    }
+    setIsLoading(false);
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
@@ -74,8 +78,8 @@ const Login = () => {
                 required
               />
             </div>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700"
               disabled={isLoading}
             >
