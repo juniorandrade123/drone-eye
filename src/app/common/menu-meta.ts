@@ -1,15 +1,15 @@
 export type MenuItem = {
-  key?: string
-  label?: string
-  icon?: string
-  link?: string
-  collapsed?: boolean
-  subMenu?: any
-  isTitle?: boolean
-  badge?: any
-  parentKey?: string
-  disabled?: boolean
-}
+  key?: string;
+  label?: string;
+  icon?: string;
+  link?: string;
+  collapsed?: boolean;
+  subMenu?: any;
+  isTitle?: boolean;
+  badge?: any;
+  parentKey?: string;
+  disabled?: boolean;
+};
 
 export const MENU: MenuItem[] = [
   {
@@ -21,23 +21,23 @@ export const MENU: MenuItem[] = [
     key: 'dashboards',
     icon: 'lucide:home',
     label: 'Dashboard',
-    link: '/index'
+    link: '/index',
+  },
+  {
+    key: 'inventario',
+    icon: 'lucide:search',
+    label: 'Consulta Inventário',
+    link: '/inventario/index',
   },
   {
     key: 'adm',
     label: 'Administração',
     isTitle: true,
   },
-    {
+  {
     key: 'usuarios',
     icon: 'tabler:users',
     label: 'Usuários',
-    link: '/usuarios'
+    link: '/usuarios',
   },
-    {
-    key: 'inventario',
-    icon: 'lucide:home',
-    label: 'Consulta Inventário',
-    link: '/inventario/index'
-  },
-]
+];
