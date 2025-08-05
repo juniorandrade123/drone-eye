@@ -92,7 +92,7 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onEditCD?.(cd.nome)}
+                    // onClick={() => onEditCD?.(cd.nome)}
                     className="flex items-center gap-2"
                   >
                     <Settings className="h-4 w-4" />
