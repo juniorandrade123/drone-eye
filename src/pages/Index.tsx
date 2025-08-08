@@ -17,6 +17,7 @@ import ConsultaInventario from "@/components/ConsultaInventario";
 import VisualizacaoGrid from "@/components/VisualizacaoGrid";
 import ExportacaoDados from "@/components/ExportacaoDados";
 import { AppSidebar } from "@/components/AppSidebar";
+import { logout } from "@/api/config/auth";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -29,6 +30,7 @@ const Index = () => {
   };
 
   const handleLogout = () => {
+    logout();
     navigate("/login");
   };
 
