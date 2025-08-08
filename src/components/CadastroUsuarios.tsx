@@ -1,14 +1,27 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Pencil, Trash2, Users, Shield, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { UsuarioService } from '@/api/services';
+import { UsuarioService } from "@/api/services";
 import moment from "moment";
+import { buscaEmpresaId } from "@/api/config/auth";
 
 interface Usuario {
   id: string;
@@ -25,7 +38,7 @@ const CadastroUsuarios = () => {
     nome: "",
     email: "",
     senha: "",
-    perfil: "" as "administrador" | "logistica" | ""
+    perfil: "" as "administrador" | "logistica" | "",
   });
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -44,53 +57,82 @@ const CadastroUsuarios = () => {
           nome: u.nome,
           email: u.email,
           dataCriacao: u.criado_em,
-          status: "ativo"
+          status: "ativo",
         } as Usuario;
       });
       setUsuarios(users);
     }
-  }
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.nome || !formData.email || !formData.perfil || (!editingId && !formData.senha)) {
+    if (
+      !formData.nome ||
+      !formData.email ||
+      !formData.perfil ||
+      (!editingId && !formData.senha)
+    ) {
       toast({
         title: "Erro",
         description: "Todos os campos são obrigatórios",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
     if (editingId) {
-      setUsuarios(usuarios.map(usuario =>
-        usuario.id === editingId
-          ? { ...usuario, nome: formData.nome, email: formData.email, perfil: formData.perfil as "administrador" | "logistica" }
-          : usuario
-      ));
-      setEditingId(null);
+      editUser();
+    } else {
+      createUser();
+    }
+  };
+
+  const createUser = async () => {
+    const empresaId = buscaEmpresaId();
+
+    const apiResponse = await UsuarioService.createUser({
+      nome: formData.nome,
+      email: formData.email,
+      senha: formData.senha,
+      empresa_id: empresaId,
+    });
+
+    if (apiResponse.ok) {
+      toast({
+        title: "Sucesso",
+        description: "Usuário criado com sucesso"
+      });
+      getUsers();
+      setFormData({ nome: "", email: "", senha: "", perfil: "" });
+    } else {
+      toast({
+        title: "Erro",
+        description: apiResponse.error.message,
+      });
+    }
+  };
+  
+  const editUser = async () => {
+    const apiResponse = await UsuarioService.editUser(editingId, {
+      nome: formData.nome,
+      email: formData.email,
+    });
+    
+    if (apiResponse.ok) {
       toast({
         title: "Sucesso",
         description: "Usuário atualizado com sucesso"
       });
+      getUsers();
+      setFormData({ nome: "", email: "", senha: "", perfil: "" });
+      setEditingId(null);
     } else {
-      const novoUsuario: Usuario = {
-        id: Date.now().toString(),
-        nome: formData.nome,
-        email: formData.email,
-        perfil: formData.perfil as "administrador" | "logistica",
-        dataCriacao: new Date().toISOString().split('T')[0],
-        status: "ativo"
-      };
-      setUsuarios([...usuarios, novoUsuario]);
       toast({
-        title: "Sucesso",
-        description: "Usuário cadastrado com sucesso"
+        title: "Erro ao cadastrar usuário",
+        description: apiResponse.error.message,
       });
     }
-
-    setFormData({ nome: "", email: "", senha: "", perfil: "" });
   };
 
   const handleEdit = (usuario: Usuario) => {
@@ -98,25 +140,38 @@ const CadastroUsuarios = () => {
       nome: usuario.nome,
       email: usuario.email,
       senha: "",
-      perfil: usuario.perfil
+      perfil: usuario.perfil || "logistica",
     });
     setEditingId(usuario.id);
   };
 
-  const handleDelete = (id: string) => {
-    setUsuarios(usuarios.filter(usuario => usuario.id !== id));
-    toast({
-      title: "Sucesso",
-      description: "Usuário removido com sucesso"
-    });
+  const handleDelete = async (id: string) => {
+    const apiResponse = await UsuarioService.deleteUser(id);
+    if (apiResponse.ok) {
+      toast({
+        title: "Sucesso",
+        description: apiResponse.data.mensagem,
+      });
+      getUsers();
+    } else {
+      toast({
+        title: "Erro",
+        description: apiResponse.error.message,
+      });
+    }
   };
 
   const toggleStatus = (id: string) => {
-    setUsuarios(usuarios.map(usuario =>
-      usuario.id === id
-        ? { ...usuario, status: usuario.status === "ativo" ? "inativo" : "ativo" }
-        : usuario
-    ));
+    setUsuarios(
+      usuarios.map((usuario) =>
+        usuario.id === id
+          ? {
+              ...usuario,
+              status: usuario.status === "ativo" ? "inativo" : "ativo",
+            }
+          : usuario
+      )
+    );
   };
 
   const cancelEdit = () => {
@@ -129,7 +184,9 @@ const CadastroUsuarios = () => {
   };
 
   const getPerfilColor = (perfil: string) => {
-    return perfil === "administrador" ? "bg-red-100 text-red-800" : "bg-blue-100 text-blue-800";
+    return perfil === "administrador"
+      ? "bg-red-100 text-red-800"
+      : "bg-blue-100 text-blue-800";
   };
 
   return (
@@ -141,7 +198,9 @@ const CadastroUsuarios = () => {
             {editingId ? "Editar Usuário" : "Cadastrar Novo Usuário"}
           </CardTitle>
           <CardDescription>
-            {editingId ? "Atualize as informações do usuário" : "Adicione um novo usuário ao sistema"}
+            {editingId
+              ? "Atualize as informações do usuário"
+              : "Adicione um novo usuário ao sistema"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -154,7 +213,9 @@ const CadastroUsuarios = () => {
                   type="text"
                   placeholder="Ex: João Silva"
                   value={formData.nome}
-                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, nome: e.target.value })
+                  }
                   required
                 />
               </div>
@@ -165,26 +226,40 @@ const CadastroUsuarios = () => {
                   type="email"
                   placeholder="Ex: joao@empresa.com"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   required
                 />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="senha">Senha {editingId && "(deixe em branco para não alterar)"}</Label>
+                <Label htmlFor="senha">
+                  Senha {editingId && "(deixe em branco para não alterar)"}
+                </Label>
                 <Input
                   id="senha"
                   type="password"
                   placeholder="Digite a senha"
                   value={formData.senha}
-                  onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, senha: e.target.value })
+                  }
                   required={!editingId}
                 />
               </div>
               <div>
                 <Label htmlFor="perfil">Perfil de Usuário</Label>
-                <Select value={formData.perfil} onValueChange={(value) => setFormData({ ...formData, perfil: value as "administrador" | "logistica" })}>
+                <Select
+                  value={formData.perfil}
+                  onValueChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      perfil: value as "administrador" | "logistica",
+                    })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o perfil" />
                   </SelectTrigger>
@@ -212,14 +287,19 @@ const CadastroUsuarios = () => {
       <Card>
         <CardHeader>
           <CardTitle>Usuários Cadastrados</CardTitle>
-          <CardDescription>Lista de todos os usuários no sistema</CardDescription>
+          <CardDescription>
+            Lista de todos os usuários no sistema
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {usuarios.map((usuario) => {
               const PerfilIcon = getPerfilIcon(usuario.perfil);
               return (
-                <div key={usuario.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div
+                  key={usuario.id}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="font-semibold">{usuario.nome}</h3>
@@ -227,14 +307,23 @@ const CadastroUsuarios = () => {
                         <PerfilIcon className="h-3 w-3 mr-1" />
                         {usuario.perfil}
                       </Badge>
-                      <Badge variant={usuario.status === "ativo" ? "default" : "secondary"}>
+                      <Badge
+                        variant={
+                          usuario.status === "ativo" ? "default" : "secondary"
+                        }
+                      >
                         {usuario.status}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">{usuario.email}</p>
-                    <p className="text-xs text-muted-foreground">Criado em: {moment(usuario.dataCriacao).format(
-                      "DD/MM/YYYY HH:mm:ss"
-                    )}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {usuario.email}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Criado em:{" "}
+                      {moment(usuario.dataCriacao).format(
+                        "DD/MM/YYYY HH:mm:ss"
+                      )}
+                    </p>
                   </div>
                   <div className="flex gap-2">
                     <Button

@@ -29,6 +29,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { logout } from "@/api/config/auth";
 
 interface AppSidebarProps {
   activeTab: string;
@@ -64,6 +65,7 @@ export function AppSidebar({ activeTab, setActiveTab, activeCadastroTab, setActi
   ];
 
   const handleLogout = () => {
+    logout();
     navigate("/login");
   };
 
