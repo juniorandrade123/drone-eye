@@ -88,7 +88,7 @@ function handleError(error) {
     if (error.response.status === 401)
     {
       removeAuthorization();
-      return; 
+      return Handlefailure(error.response.data.detail);
     }
 
     if (typeof error.response.data === 'string')
