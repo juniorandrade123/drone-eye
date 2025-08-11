@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, ArrowRight, ArrowLeft, Warehouse, MapPin, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { buscaEmpresaId } from "@/api/config/auth";
+import { CentroDistribuicaoService } from "@/api/services";
 
 const CadastroStepByStep = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -84,23 +86,46 @@ const CadastroStepByStep = () => {
     setFormData({ ...formData, ruas: novasRuas });
   };
 
-  const finalizarCadastro = () => {
-    toast({
-      title: "CD cadastrado com sucesso!",
-      description: `${formData.nome} foi configurado com ${formData.ruas.length} ruas.`,
+  const finalizarCadastro = async () => {
+    const empresaId = buscaEmpresaId();
+
+    const apiResponse = await CentroDistribuicaoService.createCD({
+      nome: formData.nome,
+      id_empresa: empresaId,
+      endereco: formData.endereco,
+      cidade: formData.cidade,
+      cep: formData.cep,
+      // Campos inexistentes no enpoid
+      // estado: formData.estado,
+      codigo: '',
+      // status: formData.status
     });
-    // Reset form
-    setFormData({
-      nome: "",
-      endereco: "",
-      cidade: "",
-      cep: "",
-      responsavel: "",
-      email: "",
-      telefone: "",
-      ruas: []
-    });
-    setCurrentStep(1);
+
+    if (apiResponse.ok) {
+      toast({
+        title: "CD cadastrado com sucesso!",
+        description: `${formData.nome} foi configurado com ${formData.ruas.length} ruas.`,
+      });
+      
+      // Reset form
+      setFormData({
+        nome: "",
+        endereco: "",
+        cidade: "",
+        cep: "",
+        responsavel: "",
+        email: "",
+        telefone: "",
+        ruas: [],
+      });
+      setCurrentStep(1);
+    } else {
+      toast({
+        title: "Erro",
+        description: apiResponse.error.message,
+      });
+    }
+
   };
 
   const isStep1Valid = formData.nome && formData.endereco && formData.cidade && formData.cep;
