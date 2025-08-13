@@ -2,25 +2,131 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Warehouse, Package, TrendingUp, AlertTriangle, Camera, MapPin, Settings } from "lucide-react";
+import { Warehouse, Package, TrendingUp, AlertTriangle, Camera, MapPin, Settings, TrendingDown } from "lucide-react";
+import { DashboardService } from "@/api/services";
+import React from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface DashboardProps {
   onEditCD?: (cdNome: string) => void;
 }
 
 const Dashboard = ({ onEditCD }: DashboardProps) => {
-  const cdsAtivos = [
-    { nome: "CD São Paulo", ocupacao: 85, skus: 1250, status: "ativo" },
-    { nome: "CD Rio de Janeiro", ocupacao: 72, skus: 980, status: "ativo" },
-    { nome: "CD Belo Horizonte", ocupacao: 91, skus: 1430, status: "alerta" },
-  ];
+  const { toast } = useToast();
+  
+  
+  const [cdsAtivos, setCdsAtivos] = React.useState([
+    { id: "", nome: "", ocupacao: 0, skus: 0, status: "ativo" },
+  ]);
+  
+  const [metricas, setMetricas] = React.useState([
+    { titulo: "CDs Ativos", valor: "0", icone: Warehouse, cor: "blue", porcentagem: null },
+    { titulo: "SKUs Totais", valor: "0", icone: Package, cor: "green", porcentagem: null },
+    { titulo: "Inventários Hoje", valor: "0", icone: Camera, cor: "purple", porcentagem: null },
+    { titulo: "Posições Mapeadas", valor: "0", icone: MapPin, cor: "orange", porcentagem: null },
+  ]);
+  
+  
+  const [ultimosInventarios, setUltimosInventarios] = React.useState([
+    { cd: "", rua: "", timestamp: "", status: "" },
+  ]);
+  
+  const [alertas, setAlertas] = React.useState([
+    { tipo: "Ocupação Alta", cd: "CD Belo Horizonte", nivel: "crítico" },
+    { tipo: "Inventário Pendente", cd: "CD São Paulo", nivel: "atenção" },
+    { tipo: "Manutenção Drone", cd: "CD Rio de Janeiro", nivel: "info" },
+  ]);
+  
+  const getCards = async () => {
+    const apiResponse = await DashboardService.getCards();
+    
+    if (apiResponse.ok) {
+      const data = apiResponse.data.cards;
+      setMetricas([
+        { titulo: "CDs Ativos", valor: data[0].value ?? "0", icone: Warehouse, cor: "blue", porcentagem: data[0].delta_pct_vs_prev_month },
+        { titulo: "SKUs Totais", valor: data[1].value ?? "0", icone: Package, cor: "green", porcentagem: data[1].delta_pct_vs_prev_month },
+        { titulo: "Inventários Hoje", valor: data[2].value ?? "0", icone: Camera, cor: "purple", porcentagem: data[2].delta_pct_vs_prev_month },
+        { titulo: "Posições Mapeadas", valor: data[3].value ?? "0", icone: MapPin, cor: "orange", porcentagem: data[3].delta_pct_vs_prev_month },
+      ]);
+    }
+    else {
+      toast({
+        title: "Erro",
+        description: 'Erro ao carregar cards.',
+      });
+    }
+  };
 
-  const metricas = [
-    { titulo: "CDs Ativos", valor: "3", icone: Warehouse, cor: "blue" },
-    { titulo: "SKUs Totais", valor: "3,660", icone: Package, cor: "green" },
-    { titulo: "Inventários Hoje", valor: "12", icone: Camera, cor: "purple" },
-    { titulo: "Posições Mapeadas", valor: "2,450", icone: MapPin, cor: "orange" },
-  ];
+  const getCds = async () => {
+    const apiResponse = await DashboardService.getCdsStatus();
+    if (apiResponse.ok) {
+      const data = apiResponse.data.cds;
+      const cds = data.map((cd: any) => ({
+        id: cd.id_cd,
+        nome: cd.nome,
+        ocupacao: cd.ocupacao_pct,
+        skus: cd.skus_ativos,
+        status: cd.status.toLowerCase() === "normal" ? "ativo" : "alerta",
+      }));
+
+      setCdsAtivos(cds);
+    }
+    else {
+      toast({
+        title: "Erro",
+        description: 'Erro ao carregar Centros de Distribuição.',
+      });
+    }
+  };
+
+  const getUltimosInventarios = async () => {
+    const apiResponse = await DashboardService.getUltimosInventarios(3);
+    if (apiResponse.ok) {
+      const data = apiResponse.data.itens;
+      const inventario = data.map((inv: any) => ({
+        id: inv.id_cd,
+        cd: inv.nome_cd,
+        rua: inv.rua,
+        timestamp: inv.hora,
+        status: inv.status,
+      }));
+      setUltimosInventarios(inventario);
+    }
+    else {
+      toast({
+        title: "Erro",
+        description: 'Erro ao carregar Últimos inventários.',
+      });
+    }
+  };
+
+  const getAlertas = async () => {
+    const apiResponse = await DashboardService.getAlerts();
+    console.log(apiResponse)
+    if (apiResponse.ok) {
+      const data = apiResponse.data.alerts;
+      const alertas = data.map((ale: any) => ({
+        tipo: ale.title,
+        cd: ale.subtitle,
+        nivel: ale.severity,
+      }));
+
+      setAlertas(alertas);
+    }
+    else {
+      toast({
+        title: "Erro",
+        description: 'Erro ao carregar Alertas e Notificações.',
+      });
+    }
+  };
+
+  React.useEffect(() => {
+    getCards();
+    getCds();
+    getUltimosInventarios();
+    getAlertas();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -38,10 +144,18 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">{metrica.valor}</div>
-              <div className="flex items-center gap-1 mt-2">
-                <TrendingUp className="h-3 w-3 text-green-500" />
-                <span className="text-xs text-green-500">+12% vs mês anterior</span>
-              </div>
+                {metrica.porcentagem !== null && (
+                  <div className="flex items-center gap-1 mt-2">
+                    {metrica.porcentagem >= 0 ? (
+                      <TrendingUp className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3 text-red-500 " />
+                    )}
+                    <span className={`text-xs ${metrica.porcentagem >= 0 ? "text-green-500" : "text-red-500"}`}>
+                      {metrica.porcentagem >= 0 ? `+${metrica.porcentagem}` : `${metrica.porcentagem}`}% vs mês anterior
+                    </span>
+                  </div>
+                )}
             </CardContent>
           </Card>
         ))}
@@ -116,11 +230,7 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {[
-                { cd: "CD São Paulo", rua: "A-12", timestamp: "10:30", status: "concluído" },
-                { cd: "CD Rio de Janeiro", rua: "B-05", timestamp: "09:45", status: "em andamento" },
-                { cd: "CD Belo Horizonte", rua: "C-08", timestamp: "09:15", status: "concluído" },
-              ].map((item, index) => (
+              {ultimosInventarios.map((item, index) => (
                 <div key={index} className="flex items-center justify-between py-2 border-b last:border-0">
                   <div>
                     <div className="font-medium">{item.cd}</div>
@@ -150,15 +260,11 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {[
-                { tipo: "Ocupação Alta", cd: "CD Belo Horizonte", nivel: "crítico" },
-                { tipo: "Inventário Pendente", cd: "CD São Paulo", nivel: "atenção" },
-                { tipo: "Manutenção Drone", cd: "CD Rio de Janeiro", nivel: "info" },
-              ].map((alerta, index) => (
+              {alertas.map((alerta, index) => (
                 <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
                   <div className={`w-2 h-2 rounded-full ${
-                    alerta.nivel === 'crítico' ? 'bg-red-400' : 
-                    alerta.nivel === 'atenção' ? 'bg-yellow-400' : 'bg-blue-400'
+                    alerta.nivel === 'critico' ? 'bg-red-400' : 
+                    alerta.nivel === 'atencao' ? 'bg-yellow-400' : 'bg-blue-400'
                   }`} />
                   <div className="flex-1">
                     <div className="font-medium text-sm">{alerta.tipo}</div>
@@ -167,8 +273,8 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
                   <Badge 
                     variant="outline" 
                     className={`text-xs ${
-                      alerta.nivel === 'crítico' ? 'border-red-200 text-red-700' : 
-                      alerta.nivel === 'atenção' ? 'border-yellow-200 text-yellow-700' : 'border-blue-200 text-blue-700'
+                      alerta.nivel === 'critico' ? 'border-red-200 text-red-700' : 
+                      alerta.nivel === 'atencao' ? 'border-yellow-200 text-yellow-700' : 'border-blue-200 text-blue-700'
                     }`}
                   >
                     {alerta.nivel}
