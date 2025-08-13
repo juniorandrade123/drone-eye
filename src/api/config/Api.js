@@ -56,6 +56,17 @@ export const remove = async (endpoint) => {
   }
 };
 
+export const patch = async (endpoint, payload) => {
+  try {
+    const response = await apiInstance.patch(endpoint, payload);
+    const responseHeaders = response.headers;
+
+    return Handlesuccess(response.data, responseHeaders);
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
 export const deleteWithPayload = async (endpoint, payload) => {
   try {
     const response = await apiInstance.post(endpoint, payload);

@@ -20,8 +20,8 @@ export async function editUser(id, payload) {
     return response;
 }
 
-export async function deleteUser(id) {
-    const response = await Api.remove(authEndpoint + id);
+export async function toggleStatusUser(id, payload) {
+    const response = await Api.patch(authEndpoint + `${id}/status` , payload);
     return response;
 }
 

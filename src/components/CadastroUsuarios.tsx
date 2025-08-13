@@ -101,7 +101,7 @@ const CadastroUsuarios = () => {
     if (apiResponse.ok) {
       toast({
         title: "Sucesso",
-        description: "Usuário criado com sucesso"
+        description: "Usuário criado com sucesso",
       });
       getUsers();
       setFormData({ nome: "", email: "", senha: "", perfil: "" });
@@ -112,17 +112,17 @@ const CadastroUsuarios = () => {
       });
     }
   };
-  
+
   const editUser = async () => {
     const apiResponse = await UsuarioService.editUser(editingId, {
       nome: formData.nome,
       email: formData.email,
     });
-    
+
     if (apiResponse.ok) {
       toast({
         title: "Sucesso",
-        description: "Usuário atualizado com sucesso"
+        description: "Usuário atualizado com sucesso",
       });
       getUsers();
       setFormData({ nome: "", email: "", senha: "", perfil: "" });
@@ -161,17 +161,26 @@ const CadastroUsuarios = () => {
     }
   };
 
-  const toggleStatus = (id: string) => {
-    setUsuarios(
-      usuarios.map((usuario) =>
-        usuario.id === id
-          ? {
-              ...usuario,
-              status: usuario.status === "ativo" ? "inativo" : "ativo",
-            }
-          : usuario
-      )
+  const toggleStatus = async (usuario: any) => {
+    const payload = {
+      ativo: usuario.ativo === "ativo",
+    };
+    const apiResponse = await UsuarioService.toggleStatusUser(
+      usuario.id,
+      payload
     );
+    if (apiResponse.ok) {
+      toast({
+        title: "Sucesso",
+        description: apiResponse.data.mensagem,
+      });
+      getUsers();
+    } else {
+      toast({
+        title: "Erro",
+        description: apiResponse.error.message,
+      });
+    }
   };
 
   const cancelEdit = () => {
@@ -329,7 +338,7 @@ const CadastroUsuarios = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => toggleStatus(usuario.id)}
+                      onClick={() => toggleStatus(usuario)}
                     >
                       {usuario.status === "ativo" ? "Desativar" : "Ativar"}
                     </Button>
