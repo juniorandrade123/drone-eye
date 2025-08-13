@@ -29,7 +29,7 @@ interface Usuario {
   email: string;
   perfil: "administrador" | "logistica";
   dataCriacao: string;
-  status: "ativo" | "inativo";
+  status: boolean;
 }
 
 const CadastroUsuarios = () => {
@@ -49,7 +49,7 @@ const CadastroUsuarios = () => {
   }, []);
 
   const getUsers = async () => {
-    const apiResponse = await UsuarioService.getUsers();
+    const apiResponse = await UsuarioService.getUsers(true);
     if (apiResponse.ok) {
       const users = apiResponse.data.map((u: any) => {
         return {
@@ -57,7 +57,7 @@ const CadastroUsuarios = () => {
           nome: u.nome,
           email: u.email,
           dataCriacao: u.criado_em,
-          status: "ativo",
+          status: u.ativo,
         } as Usuario;
       });
       setUsuarios(users);
@@ -101,7 +101,7 @@ const CadastroUsuarios = () => {
     if (apiResponse.ok) {
       toast({
         title: "Sucesso",
-        description: "Usuário criado com sucesso"
+        description: "Usuário criado com sucesso",
       });
       getUsers();
       setFormData({ nome: "", email: "", senha: "", perfil: "" });
@@ -112,17 +112,17 @@ const CadastroUsuarios = () => {
       });
     }
   };
-  
+
   const editUser = async () => {
     const apiResponse = await UsuarioService.editUser(editingId, {
       nome: formData.nome,
       email: formData.email,
     });
-    
+
     if (apiResponse.ok) {
       toast({
         title: "Sucesso",
-        description: "Usuário atualizado com sucesso"
+        description: "Usuário atualizado com sucesso",
       });
       getUsers();
       setFormData({ nome: "", email: "", senha: "", perfil: "" });
@@ -161,17 +161,27 @@ const CadastroUsuarios = () => {
     }
   };
 
-  const toggleStatus = (id: string) => {
-    setUsuarios(
-      usuarios.map((usuario) =>
-        usuario.id === id
-          ? {
-              ...usuario,
-              status: usuario.status === "ativo" ? "inativo" : "ativo",
-            }
-          : usuario
-      )
+  const toggleStatus = async (usuario: any) => {
+    console.log(usuario)
+    const payload = {
+      ativo: !usuario.status,
+    };
+    const apiResponse = await UsuarioService.toggleStatusUser(
+      usuario.id,
+      payload
     );
+    if (apiResponse.ok) {
+      toast({
+        title: "Sucesso",
+        description: apiResponse.data.mensagem,
+      });
+      getUsers();
+    } else {
+      toast({
+        title: "Erro",
+        description: apiResponse.error.message,
+      });
+    }
   };
 
   const cancelEdit = () => {
@@ -309,10 +319,10 @@ const CadastroUsuarios = () => {
                       </Badge>
                       <Badge
                         variant={
-                          usuario.status === "ativo" ? "default" : "secondary"
+                          usuario.status ? "default" : "secondary"
                         }
                       >
-                        {usuario.status}
+                        {usuario.status ? "ativo" : "inativo"}
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
@@ -329,9 +339,9 @@ const CadastroUsuarios = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => toggleStatus(usuario.id)}
+                      onClick={() => toggleStatus(usuario)}
                     >
-                      {usuario.status === "ativo" ? "Desativar" : "Ativar"}
+                      {usuario.status ? "Desativar" : "Ativar"}
                     </Button>
                     <Button
                       variant="outline"
