@@ -3,9 +3,9 @@ import { buscaEmpresaId } from "../../config/auth";
 
 const authEndpoint = 'usuario/';
 
-export async function getUsers() {
+export async function getUsers(incluirInativos) {
     const empresaId = buscaEmpresaId();
-    const response = await Api.get(authEndpoint + `?empresa_id=${empresaId}`);
+    const response = await Api.get(authEndpoint + `?empresa_id=${empresaId}&incluir_inativos=${incluirInativos}`);
 
     return response;
 }
