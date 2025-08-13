@@ -177,7 +177,7 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
     getCds();
     getUltimosInventarios();
     getAlertas();
-  }, );
+  }, []);
 
   return (
     <div className="space-y-6">
