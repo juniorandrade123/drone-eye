@@ -105,6 +105,9 @@ function handleError(error) {
     if (typeof error.response.data === 'string')
       return Handlefailure(error.response.data);
 
+    if (error.response.data && error.response.data.detail)
+      return Handlefailure(error.response.data.detail);
+
     return Handlefailure('Erro não tratado');
 
   } if (error.request) {
