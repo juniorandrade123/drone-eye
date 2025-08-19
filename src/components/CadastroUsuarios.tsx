@@ -162,7 +162,6 @@ const CadastroUsuarios = () => {
   };
 
   const toggleStatus = async (usuario: any) => {
-    console.log(usuario)
     const payload = {
       ativo: !usuario.status,
     };

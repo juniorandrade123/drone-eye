@@ -154,7 +154,6 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
 
   const getAlertas = async () => {
     const apiResponse = await DashboardService.getAlerts();
-    console.log(apiResponse);
     if (apiResponse.ok) {
       const data = apiResponse.data.alerts;
       const alertas = data.map((ale: AlertaCard) => ({

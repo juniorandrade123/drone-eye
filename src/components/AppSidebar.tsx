@@ -47,13 +47,13 @@ export function AppSidebar({ activeTab, setActiveTab, activeCadastroTab, setActi
   const mainItems = [
     { id: "dashboard", title: "Dashboard", icon: Home },
     { id: "cadastros", title: "Cadastros", icon: Settings },
-    { id: "consulta", title: "Consulta Inventário", icon: Search },
+    // { id: "consulta", title: "Consulta Inventário", icon: Search },
     // { id: "visualizacao", title: "Visualização Grid", icon: Grid3X3 },
-    // { id: "exportacao", title: "Exportação", icon: Download },
+    { id: "exportacao", title: "Exportação", icon: Download },
   ];
 
   const cadastroItems = [
-    // { id: "empresa", title: "Empresa", icon: Building2 },
+    { id: "empresa", title: "Empresa", icon: Building2 },
     { id: "cd", title: "CD", icon: Package },
     // { id: "etiqueta-palete", title: "Etiqueta Palete", icon: Tag },
     // { id: "etiqueta-posicao", title: "Etiqueta Posição", icon: MapPin },
