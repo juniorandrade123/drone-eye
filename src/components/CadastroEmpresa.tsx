@@ -33,6 +33,8 @@ const CadastroEmpresa = () => {
     nome: "",
     razao: "",
     cnpj: "",
+    telefone: "",
+    email: "",
   });
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -55,7 +57,6 @@ const CadastroEmpresa = () => {
     } else {
       createEmpresa();
     }
-
   };
 
   const handleEdit = (empresa: Empresa) => {
@@ -63,6 +64,8 @@ const CadastroEmpresa = () => {
       nome: empresa.nome,
       razao: empresa.razao_social,
       cnpj: empresa.cnpj,
+      email: empresa.email,
+      telefone: empresa.telefone,
     });
     setEditingId(empresa.id);
   };
@@ -70,33 +73,31 @@ const CadastroEmpresa = () => {
   const handleDelete = async (id: string) => {
     const apiResponse = await EmpresaService.deleteEmpresa(id);
 
-    if(apiResponse.ok) {
+    if (apiResponse.ok) {
       toast({
         title: "Sucesso",
         description: "Empresa removida com sucesso",
       });
       getEmpresas();
-    }
-    else {
+    } else {
       toast({
         title: "Erro",
         description: apiResponse.error.message,
       });
     }
-
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setFormData({ nome: "", razao: "", cnpj: "" });
+    setFormData({ nome: "", razao: "", cnpj: "", email: "", telefone: "" });
   };
 
   const getEmpresas = async () => {
     const apiResponse = await EmpresaService.getEmpresas();
-      
+
     if (apiResponse.ok) {
       const empresasData = apiResponse.data as Empresa[];
-     empresasData.forEach((empresa: Empresa) => {
+      empresasData.forEach((empresa: Empresa) => {
         empresa.criado_em = moment(empresa.criado_em).format("YYYY-MM-DD");
       });
       setEmpresas(empresasData);
@@ -113,25 +114,24 @@ const CadastroEmpresa = () => {
       nome: formData.nome,
       razao_social: formData.razao,
       cnpj: formData.cnpj,
-      email: 'teste@example.com',
-      telefone: '11987654321'
+      email: formData.email,
+      telefone: formData.telefone,
     };
     const apiResponse = await EmpresaService.createEmpresa(payload);
 
     if (apiResponse.ok) {
-      toast({ 
+      toast({
         title: "Sucesso",
         description: "Empresa cadastrada com sucesso",
       });
       getEmpresas();
-      setFormData({ nome: "", razao: "", cnpj: "" });
-
+      setFormData({ nome: "", razao: "", cnpj: "", email: "", telefone: "" });
     } else {
-      console.log(apiResponse.error)
 
       toast({
         title: "Erro",
-        description: apiResponse.error.message[0].msg || "Erro ao cadastrar empresa",
+        description:
+          apiResponse.error.message[0].msg || "Erro ao cadastrar empresa",
       });
     }
   };
@@ -141,8 +141,8 @@ const CadastroEmpresa = () => {
       nome: formData.nome,
       razao_social: formData.razao,
       cnpj: formData.cnpj,
-      // email: 'teste@example.com',
-      // telefone: '11987654321'
+      email: formData.email,
+      telefone: formData.telefone,
     };
     const apiResponse = await EmpresaService.editEmpresa(editingId, payload);
 
@@ -152,11 +152,12 @@ const CadastroEmpresa = () => {
         description: "Empresa atualizada com sucesso",
       });
       getEmpresas();
-      setFormData({ nome: "", razao: "", cnpj: "" });
+      setFormData({ nome: "", razao: "", cnpj: "", email: "", telefone: "" });
     } else {
       toast({
         title: "Erro",
-        description: apiResponse.error.message[0].msg || "Erro ao cadastrar empresa",
+        description:
+          apiResponse.error.message[0].msg || "Erro ao cadastrar empresa",
       });
     }
   };
@@ -209,6 +210,34 @@ const CadastroEmpresa = () => {
                 />
               </div>
             </div>
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="telefone">Telefone</Label>
+                <Input
+                  id="telefone"
+                  type="text"
+                  placeholder="(11) 99999-9999"
+                  value={formData.telefone || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, telefone: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Ex: joao@empresa.com"
+                  value={formData.email || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  required
+                />
+              </div>
+            </div>
             <div>
               <Label htmlFor="cnpj">CNPJ</Label>
               <Input
@@ -222,6 +251,7 @@ const CadastroEmpresa = () => {
                 required
               />
             </div>
+
             <div className="flex gap-2">
               <Button type="submit">
                 {editingId ? "Atualizar" : "Cadastrar"}
