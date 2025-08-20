@@ -236,7 +236,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
     }
   };
   const atualizarCd = async () => {
-    const apiResponse = await CentroDistribuicaoService.updateCD({
+    const apiResponse = await CentroDistribuicaoService.editCD(idCd,{
       nome: formData.nome,
       cep: formData.cep,
       endereco: formData.endereco,

@@ -20,7 +20,7 @@ export async function createCD(payload) {
 }
 
 export async function editCD(id, payload) {
-  const response = await Api.put(authEndpoint + id, payload);
+  const response = await Api.patch(`${authEndpoint}/${id}`, payload);
   return response;
 }
 
