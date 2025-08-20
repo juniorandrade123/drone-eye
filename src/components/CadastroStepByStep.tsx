@@ -33,7 +33,6 @@ import { CategoriaArmazenagemService } from "@/api/services";
 import { useEffect } from "react";
 import { RuaDTO } from "@/types/rua-model";
 import { categoriaArmazenagemDTO } from "@/types/categoria-armazenagem-model";
-import { set } from "date-fns";
 
 const CadastroStepByStep = ({ idCd: idCdProp }) => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -80,8 +79,6 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
   const tiposEtiqueta = [
     { value: "QRCODE", label: "QR Code" },
     { value: "BARCODE", label: "Barcode" },
-    { value: "EAN14", label: "EAN 14" },
-    { value: "EAN13", label: "EAN 13" },
   ];
 
   const steps = [
@@ -133,43 +130,36 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
   };
 
   const criarRua = async () => {
-    if (
-      ruaAtual.nome &&
-      ruaAtual.tipoArmazenagem &&
-      ruaAtual.etiquetaPosicao &&
-      ruaAtual.etiquetaPalete
-    ) {
+    let allOk = true;
+
+    for (const rua of formData.ruas) {
       const payload = {
         id_cd: idCd,
-        nome_rua: ruaAtual.nome || "",
-        tipo_armazenagem_id: ruaAtual.tipoArmazenagem || "",
-        total_posicoes: ruaAtual.totalPosicoes || 0,
-        paletes_por_posicao: ruaAtual.paletePorPosicao || 0,
-        etiqueta_posicao: ruaAtual.etiquetaPosicao || "",
-        etiqueta_palete: ruaAtual.etiquetaPalete || "",
+        nome_rua: rua.nome || "",
+        tipo_armazenagem_id: rua.tipoArmazenagem || "",
+        total_posicoes: rua.totalPosicoes || 0,
+        paletes_por_posicao: rua.paletePorPosicao || 0,
+        etiqueta_posicao: rua.etiquetaPosicao || "",
+        etiqueta_palete: rua.etiquetaPalete || "",
       };
 
-      const apiResponse = await ConfiguracaoRuaService.createRua(payload);
-      if (apiResponse.ok) {
-        toast({
-          title: "Sucesso",
-          description: `Rua criada com sucesso.`,
-        });
-        listarRuas();
-        setRuaAtual({
-          nome: "",
-          tipoArmazenagem: "",
-          totalPosicoes: 0,
-          paletePorPosicao: 4,
-          etiquetaPosicao: "",
-          etiquetaPalete: "",
-        });
-      } else {
-        toast({
-          title: "Erro",
-          description: "Erro ao criar rua",
-        });
+      const response = await ConfiguracaoRuaService.createRua(payload);
+      if (!response.ok) {
+        allOk = false;
+        break;
       }
+    }
+
+    if (allOk) {
+      toast({
+        title: "Sucesso",
+        description: `${formData.nome} foi configurado com ${formData.ruas.length} ruas.`,
+      });
+    } else {
+      toast({
+        title: "Erro",
+        description: "Erro ao cadastrar uma ou mais ruas.",
+      });
     }
   };
 
@@ -192,56 +182,19 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
     }
   };
 
-  const criarCd = async () => {
-    const empresaId = buscaEmpresaId();
+  const finalizarCadastro = async () => {
+    salvarCd();
+  };
 
-    const apiResponse = await CentroDistribuicaoService.createCD({
-      nome: formData.nome || "",
-      codigo: formData.nome.replace(/\s+/g, "-").toLowerCase(),
-      id_empresa: empresaId,
-      endereco: formData.endereco || "",
-      cidade: formData.cidade || "",
-      estado: "AC",
-      cep: formData.cep || "",
-      responsavel: formData.responsavel || "",
-      telefone: formData.telefone || "",
-      email: formData.email || "",
-      status: "ativo",
-    });
-
-    if (apiResponse.ok) {
-      toast({
-        title: "Sucesso",
-        description: `CD cadastrado com sucesso.`,
-      });
-
-      setFormData({
-        nome: "",
-        endereco: "",
-        cidade: "",
-        cep: "",
-        responsavel: "",
-        email: "",
-        telefone: "",
-        ruas: [],
-      });
-      setCurrentStep(2);
-      // setIdCd(apiResponse.data.id);
+  const salvarCd = async () => {
+    if (!idCd) {
+      criarCd();
     } else {
-      setCurrentStep(2);
-      toast({
-        title: "Erro",
-        description: "Erro ao cadastrar CD",
-      });
+      atualizarCd();
     }
   };
 
-  const finalizarCadastro = async () => {
-    criarCD();
-    criarRua();
-  };
-
-  const criarCD = async () => {
+  const criarCd = async () => {
     const empresaId = buscaEmpresaId();
 
     const apiResponse = await CentroDistribuicaoService.createCD({
@@ -250,16 +203,54 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
       endereco: formData.endereco,
       cidade: formData.cidade,
       cep: formData.cep,
-      // Campos inexistentes no enpoid
+      responsavel: formData.responsavel,
+      telefone: formData.telefone,
+      email: formData.email,
       // estado: formData.estado,
       codigo: "",
-      // status: formData.status
+      status: "ativo",
     });
 
     if (apiResponse.ok) {
       toast({
         title: "Sucesso",
         description: `${formData.nome} foi configurado com ${formData.ruas.length} ruas.`,
+      });
+      setIdCd(apiResponse.data.id);
+      setFormData({
+        nome: "",
+        endereco: "",
+        cidade: "",
+        cep: "",
+        responsavel: "",
+        email: "",
+        telefone: "",
+
+        ruas: [],
+      });
+    } else {
+      toast({
+        title: "Erro",
+        description: apiResponse.error.message,
+      });
+    }
+  };
+  const atualizarCd = async () => {
+    const apiResponse = await CentroDistribuicaoService.updateCD({
+      nome: formData.nome,
+      cep: formData.cep,
+      endereco: formData.endereco,
+      cidade: formData.cidade,
+      // estado: formData.estado,
+      responsavel: formData.responsavel,
+      email: formData.email,
+      telefone: formData.telefone,
+    });
+
+    if (apiResponse.ok) {
+      toast({
+        title: "Sucesso",
+        description: `${formData.nome} foi atualizado com ${formData.ruas.length} ruas.`,
       });
       setIdCd(apiResponse.data.id);
       setFormData({
@@ -279,6 +270,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
       });
     }
   };
+ 
   const listarRuas = async () => {
     // informar o cd quando cadastrar na primeira opcao
     const response = await ConfiguracaoRuaService.listarRuas();
@@ -307,48 +299,49 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
   };
 
   const listarCategorias = async () => {
-      const apiResponse = await CategoriaArmazenagemService.getCategorias(idCd);
+    const apiResponse = await CategoriaArmazenagemService.getCategorias(idCd);
 
-      if (apiResponse.ok) {
-        const data: categoriaArmazenagemDTO[] = apiResponse.data;
-        setTiposArmazenagem(
-          data.map((cat) => ({
-            key: cat.nome,
-            value: cat.id,
-          }))
-        );
-      } else {
-        toast({
-          title: "Erro",
-          description: "Erro ao buscar categorias de armazenagem",
-        });
+    if (apiResponse.ok) {
+      const data: categoriaArmazenagemDTO[] = apiResponse.data;
+      setTiposArmazenagem(
+        data.map((cat) => ({
+          key: cat.nome,
+          value: cat.id,
+        }))
+      );
+    } else {
+      toast({
+        title: "Erro",
+        description: "Erro ao buscar categorias de armazenagem",
+      });
     }
   };
 
   const listarCdSelecionado = async () => {
-      const response = await CentroDistribuicaoService.getCD(idCd);
-      if (response.ok) {
-        const data = response.data[0];
-        setFormData((prev) => ({
-          ...prev,
-          nome: data.nome,
-          endereco: data.endereco,
-          cidade: data.cidade,
-          cep: data.cep,
-          responsavel: data.responsavel,
-          email: data.email,
-          telefone: data.telefone,
-          // ruas permanece como está
-        }));
-      } else {
-        toast({
-          title: "Erro",
-          description: "Erro ao buscar CD",
-        });
+    const response = await CentroDistribuicaoService.getCD(idCd);
+    if (response.ok) {
+      const data = response.data[0];
+      setFormData((prev) => ({
+        ...prev,
+        nome: data.nome,
+        endereco: data.endereco,
+        cidade: data.cidade,
+        cep: data.cep,
+        responsavel: data.responsavel,
+        email: data.email,
+        telefone: data.telefone,
+        // ruas permanece como está
+      }));
+    } else {
+      toast({
+        title: "Erro",
+        description: "Erro ao buscar CD",
+      });
     }
   };
 
   useEffect(() => {
+    // setIdCd('a629a5f5-6e4b-456f-bb28-936b305aef9c');
     if (idCd) {
       listarCategorias();
       listarCdSelecionado();
@@ -360,12 +353,6 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
   const isStep1Valid =
     formData.nome && formData.endereco && formData.cidade && formData.cep;
   const isStep2Valid = formData.ruas.length > 0;
-
-  useEffect(() => {
-  return () => {
-    setIdCd(undefined);
-  };
-}, []);
 
   return (
     <div className="space-y-6">
@@ -461,6 +448,16 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
                   placeholder="Cidade"
                 />
               </div>
+              {/* <div className="space-y-2">
+                <Label>Código *</Label>
+                <Input
+                  value={formData.codigo}
+                  onChange={(e) =>
+                    setFormData({ ...formData, codigo: e.target.value })
+                  }
+                  placeholder="Código do CD"
+                />
+              </div> */}
               <div className="space-y-2">
                 <Label>Responsável</Label>
                 <Input
