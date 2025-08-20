@@ -12,8 +12,8 @@ export const logout = () => {
 };
 
 export const buscaEmpresaId = () => {
-    const session = JSON.parse(sessionStorage.getItem(USER_KEY) || '');
-    if (!session) return '';
-
+    const userStr = sessionStorage.getItem(USER_KEY);
+    if (!userStr) return '';
+    const session = JSON.parse(userStr);
     return session.empresa.id;
 }

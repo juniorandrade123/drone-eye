@@ -33,9 +33,10 @@ import { CategoriaArmazenagemService } from "@/api/services";
 import { useEffect } from "react";
 import { RuaDTO } from "@/types/rua-model";
 import { categoriaArmazenagemDTO } from "@/types/categoria-armazenagem-model";
+import { set } from "date-fns";
 
-const CadastroStepByStep = () => {
-  const [currentStep, setCurrentStep] = useState(2);
+const CadastroStepByStep = ({ idCd: idCdProp }) => {
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     nome: "",
     endereco: "",
@@ -66,7 +67,13 @@ const CadastroStepByStep = () => {
     Array<{ key: string; value: string }>
   >([]);
 
-  const [idCd, setIdCd] = useState();
+  const [idCd, setIdCd] = useState<string | undefined>();
+
+  useEffect(() => {
+    if (idCdProp) {
+      setIdCd(idCdProp.idCd);
+    }
+  }, [idCdProp]);
 
   const { toast } = useToast();
 
@@ -92,16 +99,8 @@ const CadastroStepByStep = () => {
   ];
 
   const nextStep = () => {
-    switch (currentStep) {
-      case 1:
-        criarCd();
-        break;
-      case 2:
-      case 3:
-        setCurrentStep(currentStep + 1);
-        break;
-      default:
-        break;
+    if (currentStep < 3) {
+      setCurrentStep(currentStep + 1);
     }
   };
 
@@ -111,7 +110,29 @@ const CadastroStepByStep = () => {
     }
   };
 
-  const adicionarRua = async () => {
+  const adicionarRua = () => {
+    if (
+      ruaAtual.nome &&
+      ruaAtual.tipoArmazenagem &&
+      ruaAtual.etiquetaPosicao &&
+      ruaAtual.etiquetaPalete
+    ) {
+      setFormData({
+        ...formData,
+        ruas: [...formData.ruas, ruaAtual],
+      });
+      setRuaAtual({
+        nome: "",
+        tipoArmazenagem: "",
+        totalPosicoes: 0,
+        paletePorPosicao: 4,
+        etiquetaPosicao: "",
+        etiquetaPalete: "",
+      });
+    }
+  };
+
+  const criarRua = async () => {
     if (
       ruaAtual.nome &&
       ruaAtual.tipoArmazenagem &&
@@ -152,9 +173,23 @@ const CadastroStepByStep = () => {
     }
   };
 
-  const removerRua = (index: number) => {
-    const novasRuas = formData.ruas.filter((_, i) => i !== index);
-    setFormData({ ...formData, ruas: novasRuas });
+  const removerRua = async (rua: RuaDTO) => {
+    const apiResponse = await ConfiguracaoRuaService.deleteRua(
+      rua.id,
+      rua.id_cd
+    );
+    if (apiResponse.ok) {
+      toast({
+        title: "Sucesso",
+        description: "Rua removida com sucesso",
+      });
+      listarRuas();
+    } else {
+      toast({
+        title: "Erro",
+        description: "Erro ao remover rua",
+      });
+    }
   };
 
   const criarCd = async () => {
@@ -202,6 +237,11 @@ const CadastroStepByStep = () => {
   };
 
   const finalizarCadastro = async () => {
+    criarCD();
+    criarRua();
+  };
+
+  const criarCD = async () => {
     const empresaId = buscaEmpresaId();
 
     const apiResponse = await CentroDistribuicaoService.createCD({
@@ -221,8 +261,7 @@ const CadastroStepByStep = () => {
         title: "Sucesso",
         description: `${formData.nome} foi configurado com ${formData.ruas.length} ruas.`,
       });
-
-      // Reset form
+      setIdCd(apiResponse.data.id);
       setFormData({
         nome: "",
         endereco: "",
@@ -233,7 +272,6 @@ const CadastroStepByStep = () => {
         telefone: "",
         ruas: [],
       });
-      setCurrentStep(1);
     } else {
       toast({
         title: "Erro",
@@ -241,14 +279,12 @@ const CadastroStepByStep = () => {
       });
     }
   };
-
   const listarRuas = async () => {
     // informar o cd quando cadastrar na primeira opcao
     const response = await ConfiguracaoRuaService.listarRuas();
 
     if (response.ok) {
       const data: RuaDTO[] = response.data;
-      console.log("Ruas:", data);
       setFormData({
         ...formData,
         ruas: data.map((rua) => ({
@@ -258,6 +294,8 @@ const CadastroStepByStep = () => {
           paletePorPosicao: rua.paletes_por_posicao,
           etiquetaPosicao: rua.etiqueta_posicao,
           etiquetaPalete: rua.etiqueta_palete,
+          id_cd: rua.id_cd,
+          id: rua.id,
         })),
       });
     } else {
@@ -269,30 +307,30 @@ const CadastroStepByStep = () => {
   };
 
   const listarCategorias = async () => {
-    const apiResponse = await CategoriaArmazenagemService.getCategorias(idCd);
+      const apiResponse = await CategoriaArmazenagemService.getCategorias(idCd);
 
-    if (apiResponse.ok) {
-      const data: categoriaArmazenagemDTO[] = apiResponse.data;
-      setTiposArmazenagem(
-        data.map((cat) => ({
-          key: cat.nome,
-          value: cat.id,
-        }))
-      );
-    } else {
-      toast({
-        title: "Erro",
-        description: "Erro ao buscar categorias de armazenagem",
-      });
+      if (apiResponse.ok) {
+        const data: categoriaArmazenagemDTO[] = apiResponse.data;
+        setTiposArmazenagem(
+          data.map((cat) => ({
+            key: cat.nome,
+            value: cat.id,
+          }))
+        );
+      } else {
+        toast({
+          title: "Erro",
+          description: "Erro ao buscar categorias de armazenagem",
+        });
     }
   };
 
   const listarCdSelecionado = async () => {
-    if (idCd) {
-       const response = await CentroDistribuicaoService.getCD(idCd);
+      const response = await CentroDistribuicaoService.getCD(idCd);
       if (response.ok) {
-          const data = response.data[0];
-        setFormData({
+        const data = response.data[0];
+        setFormData((prev) => ({
+          ...prev,
           nome: data.nome,
           endereco: data.endereco,
           cidade: data.cidade,
@@ -300,30 +338,34 @@ const CadastroStepByStep = () => {
           responsavel: data.responsavel,
           email: data.email,
           telefone: data.telefone,
-          ruas: [],
-        });
+          // ruas permanece como está
+        }));
       } else {
         toast({
           title: "Erro",
           description: "Erro ao buscar CD",
         });
-      }
     }
   };
 
   useEffect(() => {
-    listarRuas();
-    listarCategorias();
-    listarCdSelecionado();
-  }, []);
-
-  useEffect(() => {
-    listarCdSelecionado();
+    if (idCd) {
+      listarCategorias();
+      listarCdSelecionado();
+      listarRuas();
+    }
   }, [idCd]);
+
 
   const isStep1Valid =
     formData.nome && formData.endereco && formData.cidade && formData.cep;
   const isStep2Valid = formData.ruas.length > 0;
+
+  useEffect(() => {
+  return () => {
+    setIdCd(undefined);
+  };
+}, []);
 
   return (
     <div className="space-y-6">
@@ -635,7 +677,7 @@ const CadastroStepByStep = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => removerRua(index)}
+                        onClick={() => removerRua(rua)}
                       >
                         Remover
                       </Button>
