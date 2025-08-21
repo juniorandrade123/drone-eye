@@ -7,26 +7,31 @@ export async function listarRuas(id_cd, incluir_inativas) {
   const params = new URLSearchParams();
   const empresaId = buscaEmpresaId();
 
-  if (empresaId) params.append("id_empresa", empresaId);
-  if (id_cd) params.append("id_cd", id_cd);
-  if (typeof incluir_inativas === "boolean")
-    params.append("incluir_inativas", incluir_inativas);
+  if (incluir_inativas) params.append("incluir_inativas", incluir_inativas);
 
-  const response = await Api.get(`${authEndpoint}?${params.toString()}`);
+  const response = await Api.get(
+    `/empresas/${empresaId}/cds/${id_cd}/${authEndpoint}?${params.toString()}`
+  );
+
   return response;
 }
 
 export async function createRua(payload) {
-  payload.id_empresa = buscaEmpresaId();
-  const response = await Api.post(authEndpoint, payload);
+  const empresaId = buscaEmpresaId();
+  
+  const response = await Api.post(
+    `/empresas/${empresaId}/cds/${payload.id_cd}/${authEndpoint}`,
+    payload
+  );
+
   return response;
 }
 
 export async function deleteRua(id, id_cd) {
-    const params = new URLSearchParams();
-    params.append("id_empresa", buscaEmpresaId());
-    params.append("id_cd", id_cd);
+  const empresaId = buscaEmpresaId();
 
-    const response = await Api.remove(`${authEndpoint}/${id}?${params.toString()}`);
-    return response;
+  const response = await Api.remove(
+    `/empresas/${empresaId}/cds/${id_cd}/${authEndpoint}/${id}`
+  );
+  return response;
 }

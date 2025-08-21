@@ -3,16 +3,21 @@ import { buscaEmpresaId } from "../../config/auth";
 
 const authEndpoint = "cd";
 
-export async function getCD(id_cd) {
+export async function getCD(idCd) {
   const empresaId = buscaEmpresaId();
   const params = new URLSearchParams();
-  
-  if (id_cd) params.append("id_cd", id_cd);
+
+  if (idCd) params.append("id_cd", idCd);
   if (empresaId) params.append("id_empresa", empresaId);
 
   const response = await Api.get(`${authEndpoint}?${params.toString()}`);
   return response;
 }
+export async function getCdById(idCd) {
+  const response = await Api.get(`${authEndpoint}/${idCd}`);
+  return response;
+}
+
 
 export async function createCD(payload) {
   const response = await Api.post(authEndpoint, payload);
