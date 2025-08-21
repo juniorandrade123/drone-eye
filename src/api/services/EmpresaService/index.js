@@ -11,7 +11,7 @@ export async function getEmpresas(limit = 100) {
 }
 
 export async function getEmpresaById(empresaId) {
-    const response = await Api.get(authEndpoint + `?empresa_id=${empresaId}`);
+    const response = await Api.get(authEndpoint + `?id_empresa=${empresaId}`);
 
     return response;
 }

@@ -1,16 +1,40 @@
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCallback, useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, ArrowRight, ArrowLeft, Warehouse, MapPin, Package } from "lucide-react";
+import {
+  CheckCircle,
+  ArrowRight,
+  ArrowLeft,
+  Warehouse,
+  MapPin,
+  Package,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { buscaEmpresaId } from "@/api/config/auth";
 import { CentroDistribuicaoService } from "@/api/services";
+import { ConfiguracaoRuaService } from "@/api/services";
+import { TipoArmazenagemService } from "@/api/services";
+import { useEffect } from "react";
+import { RuaDTO } from "@/types/rua-model";
+import { categoriaArmazenagemDTO } from "@/types/categoria-armazenagem-model";
 
-const CadastroStepByStep = () => {
+const CadastroStepByStep = ({ idCd: idCdProp }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     nome: "",
@@ -20,6 +44,8 @@ const CadastroStepByStep = () => {
     responsavel: "",
     email: "",
     telefone: "",
+    codigo: "",
+    estado: "",
     ruas: [] as Array<{
       nome: string;
       tipoArmazenagem: string;
@@ -27,29 +53,70 @@ const CadastroStepByStep = () => {
       paletePorPosicao: number;
       etiquetaPosicao: string;
       etiquetaPalete: string;
-    }>
+      id?: string;
+    }>,
   });
+
   const [ruaAtual, setRuaAtual] = useState({
     nome: "",
     tipoArmazenagem: "",
     totalPosicoes: 0,
     paletePorPosicao: 4,
     etiquetaPosicao: "",
-    etiquetaPalete: ""
+    etiquetaPalete: "",
   });
+
+  const [tiposArmazenagem, setTiposArmazenagem] = useState<
+    Array<{ key: string; value: string }>
+  >([]);
+
+  const [idCd, setIdCd] = useState<string | undefined>(idCdProp?.idCd);
+
+  const estados = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+
+  
+  const carregarDadosIniciais = useCallback(async () => {
+    if (idCd) {
+      try {
+        await listarCdSelecionado();
+        await listarRuas();
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar dados iniciais",
+        });
+      }
+    }
+  }, [idCd]);
+
+  useEffect(() => {
+    listarCategorias();
+  }, []);
+
+  useEffect(() => {
+    if (idCd) {
+      carregarDadosIniciais();
+    }
+  }, [idCd, carregarDadosIniciais]);
   const { toast } = useToast();
 
   const tiposEtiqueta = [
-    { value: "qrcode", label: "QR Code" },
-    { value: "barcode", label: "Barcode" },
-    { value: "ean14", label: "EAN 14" },
-    { value: "ean13", label: "EAN 13" }
+    { value: "QRCODE", label: "QR Code" },
+    { value: "BARCODE", label: "Barcode" },
   ];
 
   const steps = [
     { id: 1, title: "Informações Gerais", description: "Dados básicos do CD" },
-    { id: 2, title: "Configuração de Ruas", description: "Defina as ruas e armazenagem" },
-    { id: 3, title: "Revisão e Finalização", description: "Confirme as informações" }
+    {
+      id: 2,
+      title: "Configuração de Ruas",
+      description: "Defina as ruas e armazenagem",
+    },
+    {
+      id: 3,
+      title: "Revisão e Finalização",
+      description: "Confirme as informações",
+    },
   ];
 
   const nextStep = () => {
@@ -65,10 +132,15 @@ const CadastroStepByStep = () => {
   };
 
   const adicionarRua = () => {
-    if (ruaAtual.nome && ruaAtual.tipoArmazenagem && ruaAtual.etiquetaPosicao && ruaAtual.etiquetaPalete) {
+    if (
+      ruaAtual.nome &&
+      ruaAtual.tipoArmazenagem &&
+      ruaAtual.etiquetaPosicao &&
+      ruaAtual.etiquetaPalete
+    ) {
       setFormData({
         ...formData,
-        ruas: [...formData.ruas, ruaAtual]
+        ruas: [...formData.ruas, ruaAtual],
       });
       setRuaAtual({
         nome: "",
@@ -76,17 +148,99 @@ const CadastroStepByStep = () => {
         totalPosicoes: 0,
         paletePorPosicao: 4,
         etiquetaPosicao: "",
-        etiquetaPalete: ""
+        etiquetaPalete: "",
       });
     }
   };
 
-  const removerRua = (index: number) => {
+  const criarRua = async (id_Cd: string) => {
+    let allOk = true;
+    for (const rua of formData.ruas) {
+      if (!rua.id) {
+        const payload = {
+          id_cd: id_Cd,
+          nome_rua: rua.nome || "",
+          tipo_armazenagem_id: rua.tipoArmazenagem || "",
+          total_posicoes: rua.totalPosicoes || 0,
+          paletes_por_posicao: rua.paletePorPosicao || 0,
+          etiqueta_posicao: rua.etiquetaPosicao || "",
+          etiqueta_palete: rua.etiquetaPalete || "",
+        };
+
+        const response = await ConfiguracaoRuaService.createRua(payload);
+        if (!response.ok) {
+          allOk = false;
+          break;
+        }
+      }
+    }
+
+    if (allOk) {
+      toast({
+        title: "Sucesso",
+        description: `${formData.nome} foi configurado com ${formData.ruas.length} ruas.`,
+      });
+      setCurrentStep(1);
+    } else {
+      toast({
+        title: "Erro",
+        description: "Erro ao cadastrar uma ou mais ruas.",
+      });
+      setCurrentStep(2);
+    }
+  };
+
+  const removerRuaApi = async (rua: RuaDTO) => {
+    if (rua.id) {
+      const apiResponse = await ConfiguracaoRuaService.deleteRua(
+        rua.id,
+        rua.id_cd
+      );
+      if (apiResponse.ok) {
+        toast({
+          title: "Sucesso",
+          description: "Rua removida com sucesso",
+        });
+        listarRuas();
+      } else {
+        toast({
+          title: "Erro",
+          description: "Erro ao remover rua",
+        });
+      }
+    }
+  };
+
+  const removerRuaDaLista = (index: number) => {
     const novasRuas = formData.ruas.filter((_, i) => i !== index);
     setFormData({ ...formData, ruas: novasRuas });
+    toast({
+      title: "Sucesso",
+      description: "Rua removida com sucesso",
+    });
+  };
+
+  const removerRua = (rua: RuaDTO, index: number) => {
+    if (rua.id) {
+      removerRuaApi(rua);
+    } else {
+      removerRuaDaLista(index);
+    }
   };
 
   const finalizarCadastro = async () => {
+    salvarCd();
+  };
+
+  const salvarCd = async () => {
+    if (!idCd) {
+      criarCd();
+    } else {
+      atualizarCd();
+    }
+  };
+
+  const criarCd = async () => {
     const empresaId = buscaEmpresaId();
 
     const apiResponse = await CentroDistribuicaoService.createCD({
@@ -95,19 +249,16 @@ const CadastroStepByStep = () => {
       endereco: formData.endereco,
       cidade: formData.cidade,
       cep: formData.cep,
-      // Campos inexistentes no enpoid
-      // estado: formData.estado,
-      codigo: '',
-      // status: formData.status
+      responsavel: formData.responsavel,
+      telefone: formData.telefone,
+      email: formData.email,
+      estado: formData.estado,
+      codigo: formData.codigo,
+      status: true,
     });
 
     if (apiResponse.ok) {
-      toast({
-        title: "CD cadastrado com sucesso!",
-        description: `${formData.nome} foi configurado com ${formData.ruas.length} ruas.`,
-      });
-      
-      // Reset form
+      setIdCd(apiResponse.data.id);
       setFormData({
         nome: "",
         endereco: "",
@@ -116,19 +267,139 @@ const CadastroStepByStep = () => {
         responsavel: "",
         email: "",
         telefone: "",
+        codigo: "",
+        estado: "",
         ruas: [],
       });
-      setCurrentStep(1);
+      criarRua(apiResponse.data.id);
+    } else {
+      toast({
+        title: "Erro",
+        description: "Erro ao cadastrar CD",
+      });
+    }
+  };
+  const atualizarCd = async () => {
+    const apiResponse = await CentroDistribuicaoService.editCD(idCd, {
+      nome: formData.nome,
+      cep: formData.cep,
+      endereco: formData.endereco,
+      cidade: formData.cidade,
+      estado: formData.estado,
+      responsavel: formData.responsavel,
+      email: formData.email,
+      telefone: formData.telefone,
+    });
+
+    if (apiResponse.ok) {
+      setIdCd(apiResponse.data.id);
+      criarRua(apiResponse.data.id);
     } else {
       toast({
         title: "Erro",
         description: apiResponse.error.message,
       });
     }
-
   };
 
-  const isStep1Valid = formData.nome && formData.endereco && formData.cidade && formData.cep;
+  const listarRuas = async () => {
+    if (!idCd) return;
+
+    const response = await ConfiguracaoRuaService.listarRuas(idCd);
+    if (response.ok) {
+      const data: RuaDTO[] = response.data;
+
+      const ruasComArmazenagem = await Promise.all(
+        data.map(async (rua) => ({
+          nome: rua.nome_rua,
+          tipoArmazenagem:
+            (await getArmazenagemNomeById(rua.tipo_armazenagem_id)) || "",
+          totalPosicoes: rua.total_posicoes,
+          paletePorPosicao: rua.paletes_por_posicao,
+          etiquetaPosicao: rua.etiqueta_posicao,
+          etiquetaPalete: rua.etiqueta_palete,
+          id_cd: rua.id_cd,
+          id: rua.id,
+        }))
+      );
+      setFormData((prev) => ({
+        ...prev,
+        ruas: ruasComArmazenagem,
+      }));
+    } else {
+      toast({
+        title: "Erro ao buscar ruas",
+        description: response.error.message,
+      });
+    }
+  };
+
+  const getArmazenagemNomeById = async (
+    id_armazenagem: string
+  ): Promise<string | undefined> => {
+    const apiResponse = await TipoArmazenagemService.getArmazenagemById(
+      id_armazenagem
+    );
+    if (apiResponse.ok) {
+      const data: categoriaArmazenagemDTO = apiResponse.data;
+      return data.nome;
+    }
+    return undefined;
+  };
+
+  const listarCategorias = async () => {
+    const apiResponse = await TipoArmazenagemService.getArmazenagens();
+
+    if (apiResponse.ok) {
+      const data: categoriaArmazenagemDTO[] = apiResponse.data;
+      setTiposArmazenagem(
+        data.map((cat) => ({
+          key: cat.nome,
+          value: cat.id,
+        }))
+      );
+    } else {
+      toast({
+        title: "Erro",
+        description: "Erro ao buscar categorias de armazenagem",
+      });
+    }
+  };
+
+  const listarCdSelecionado = async () => {
+    if (!idCd) return;
+
+    const response = await CentroDistribuicaoService.getCdById(idCd);
+    if (response.ok) {
+      const data = response.data;
+      setFormData((prev) => ({
+        ...prev, // Mantém as ruas existentes
+        nome: data.nome,
+        endereco: data.endereco,
+        cidade: data.cidade,
+        cep: data.cep,
+        responsavel: data.responsavel,
+        email: data.email,
+        telefone: data.telefone,
+        codigo: data.codigo,
+        estado: data.estado,
+      }));
+    } else {
+      toast({
+        title: "Erro",
+        description: "Erro ao buscar CD",
+      });
+    }
+  };
+
+  const isStep1Valid =
+    formData.nome &&
+    formData.endereco &&
+    formData.cidade &&
+    formData.cep &&
+    formData.estado &&
+    formData.codigo &&
+    formData.email;
   const isStep2Valid = formData.ruas.length > 0;
 
   return (
@@ -139,13 +410,25 @@ const CadastroStepByStep = () => {
           <div className="flex items-center justify-between">
             {steps.map((step, index) => (
               <div key={step.id} className="flex items-center">
-                <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                  currentStep >= step.id ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
-                }`}>
-                  {currentStep > step.id ? <CheckCircle className="h-4 w-4" /> : step.id}
+                <div
+                  className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                    currentStep >= step.id
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-600"
+                  }`}
+                >
+                  {currentStep > step.id ? (
+                    <CheckCircle className="h-4 w-4" />
+                  ) : (
+                    step.id
+                  )}
                 </div>
                 <div className="ml-3">
-                  <p className={`text-sm font-medium ${currentStep >= step.id ? 'text-blue-600' : 'text-gray-500'}`}>
+                  <p
+                    className={`text-sm font-medium ${
+                      currentStep >= step.id ? "text-blue-600" : "text-gray-500"
+                    }`}
+                  >
                     {step.title}
                   </p>
                   <p className="text-xs text-gray-500">{step.description}</p>
@@ -158,7 +441,6 @@ const CadastroStepByStep = () => {
           </div>
         </CardContent>
       </Card>
-
       {/* Step 1: Informações Gerais */}
       {currentStep === 1 && (
         <Card>
@@ -177,7 +459,9 @@ const CadastroStepByStep = () => {
                 <Label>Nome do CD *</Label>
                 <Input
                   value={formData.nome}
-                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, nome: e.target.value })
+                  }
                   placeholder="Ex: CD São Paulo"
                 />
               </div>
@@ -185,7 +469,9 @@ const CadastroStepByStep = () => {
                 <Label>CEP *</Label>
                 <Input
                   value={formData.cep}
-                  onChange={(e) => setFormData({ ...formData, cep: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, cep: e.target.value })
+                  }
                   placeholder="00000-000"
                 />
               </div>
@@ -193,40 +479,91 @@ const CadastroStepByStep = () => {
                 <Label>Endereço *</Label>
                 <Input
                   value={formData.endereco}
-                  onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, endereco: e.target.value })
+                  }
                   placeholder="Rua, número"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Estado *</Label>
+                <Select
+                  value={formData.estado}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, estado: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {estados.map((uf) => (
+                      <SelectItem key={uf} value={uf}>
+                        {uf}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>Cidade *</Label>
                 <Input
                   value={formData.cidade}
-                  onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, cidade: e.target.value })
+                  }
                   placeholder="Cidade"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Código *</Label>
+                <Input
+                  value={formData.codigo}
+                  onChange={(e) =>
+                    setFormData({ ...formData, codigo: e.target.value })
+                  }
+                  placeholder="Código do CD"
                 />
               </div>
               <div className="space-y-2">
                 <Label>Responsável</Label>
                 <Input
                   value={formData.responsavel}
-                  onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, responsavel: e.target.value })
+                  }
                   placeholder="Nome do responsável"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Email</Label>
+                <Label>Email *</Label>
                 <Input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, email: e.target.value });
+                  }}
                   placeholder="email@exemplo.com"
+                  onBlur={(e) => {
+                    const email = e.target.value;
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (email && !emailRegex.test(email)) {
+                      toast({
+                        title: "Email inválido",
+                        description: "Digite um email válido.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
                 />
               </div>
               <div className="space-y-2">
                 <Label>Telefone</Label>
                 <Input
                   value={formData.telefone}
-                  onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, telefone: e.target.value })
+                  }
                   placeholder="(11) 99999-9999"
                 />
               </div>
@@ -234,7 +571,6 @@ const CadastroStepByStep = () => {
           </CardContent>
         </Card>
       )}
-
       {/* Step 2: Configuração de Ruas */}
       {currentStep === 2 && (
         <div className="space-y-6">
@@ -254,7 +590,9 @@ const CadastroStepByStep = () => {
                   <Label>Nome da Rua</Label>
                   <Input
                     value={ruaAtual.nome}
-                    onChange={(e) => setRuaAtual({ ...ruaAtual, nome: e.target.value })}
+                    onChange={(e) =>
+                      setRuaAtual({ ...ruaAtual, nome: e.target.value })
+                    }
                     placeholder="Ex: A-10"
                   />
                 </div>
@@ -262,15 +600,20 @@ const CadastroStepByStep = () => {
                   <Label>Tipo de Armazenagem</Label>
                   <Select
                     value={ruaAtual.tipoArmazenagem}
-                    onValueChange={(value) => setRuaAtual({ ...ruaAtual, tipoArmazenagem: value })}
+                    onValueChange={(value) =>{
+                      setRuaAtual({ ...ruaAtual, tipoArmazenagem: value })
+                    }
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="picking">Picking</SelectItem>
-                      <SelectItem value="pallet">Pallet</SelectItem>
-                      <SelectItem value="bulk">Bulk</SelectItem>
+                      {tiposArmazenagem.map((tipo) => (
+                        <SelectItem key={tipo.value} value={tipo.value}>
+                          {tipo.key}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -279,7 +622,12 @@ const CadastroStepByStep = () => {
                   <Input
                     type="number"
                     value={ruaAtual.totalPosicoes}
-                    onChange={(e) => setRuaAtual({ ...ruaAtual, totalPosicoes: parseInt(e.target.value) || 0 })}
+                    onChange={(e) =>
+                      setRuaAtual({
+                        ...ruaAtual,
+                        totalPosicoes: parseInt(e.target.value) || 0,
+                      })
+                    }
                     placeholder="Ex: 10"
                   />
                 </div>
@@ -287,7 +635,12 @@ const CadastroStepByStep = () => {
                   <Label>Paletes por Posição</Label>
                   <Select
                     value={ruaAtual.paletePorPosicao.toString()}
-                    onValueChange={(value) => setRuaAtual({ ...ruaAtual, paletePorPosicao: parseInt(value) })}
+                    onValueChange={(value) =>
+                      setRuaAtual({
+                        ...ruaAtual,
+                        paletePorPosicao: parseInt(value),
+                      })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -303,7 +656,9 @@ const CadastroStepByStep = () => {
                   <Label>Etiqueta da Posição</Label>
                   <Select
                     value={ruaAtual.etiquetaPosicao}
-                    onValueChange={(value) => setRuaAtual({ ...ruaAtual, etiquetaPosicao: value })}
+                    onValueChange={(value) =>
+                      setRuaAtual({ ...ruaAtual, etiquetaPosicao: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Tipo de etiqueta" />
@@ -321,7 +676,9 @@ const CadastroStepByStep = () => {
                   <Label>Etiqueta do Palete</Label>
                   <Select
                     value={ruaAtual.etiquetaPalete}
-                    onValueChange={(value) => setRuaAtual({ ...ruaAtual, etiquetaPalete: value })}
+                    onValueChange={(value) =>
+                      setRuaAtual({ ...ruaAtual, etiquetaPalete: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Tipo de etiqueta" />
@@ -336,9 +693,14 @@ const CadastroStepByStep = () => {
                   </Select>
                 </div>
               </div>
-              <Button 
-                onClick={adicionarRua} 
-                disabled={!ruaAtual.nome || !ruaAtual.tipoArmazenagem || !ruaAtual.etiquetaPosicao || !ruaAtual.etiquetaPalete}
+              <Button
+                onClick={adicionarRua}
+                disabled={
+                  !ruaAtual.nome ||
+                  !ruaAtual.tipoArmazenagem ||
+                  !ruaAtual.etiquetaPosicao ||
+                  !ruaAtual.etiquetaPalete
+                }
               >
                 Adicionar Rua
               </Button>
@@ -349,28 +711,48 @@ const CadastroStepByStep = () => {
           {formData.ruas.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Ruas Configuradas ({formData.ruas.length})</CardTitle>
+                <CardTitle>
+                  Ruas Configuradas ({formData.ruas.length})
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   {formData.ruas.map((rua, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                    >
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-4">
                           <Badge variant="outline">{rua.nome}</Badge>
                           <span className="text-sm text-gray-600">
-                            {rua.tipoArmazenagem} • {rua.totalPosicoes} posições • {rua.paletePorPosicao} paletes/posição
+                            {tiposArmazenagem.find((t) => t.value === rua.tipoArmazenagem)?.key || rua.tipoArmazenagem}• {rua.totalPosicoes} posições
+                            • {rua.paletePorPosicao} paletes/posição
                           </span>
                         </div>
                         <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <span>Posição: {tiposEtiqueta.find(t => t.value === rua.etiquetaPosicao)?.label}</span>
-                          <span>Palete: {tiposEtiqueta.find(t => t.value === rua.etiquetaPalete)?.label}</span>
+                          <span>
+                            Posição:{" "}
+                            {
+                              tiposEtiqueta.find(
+                                (t) => t.value === rua.etiquetaPosicao
+                              )?.label
+                            }
+                          </span>
+                          <span>
+                            Palete:{" "}
+                            {
+                              tiposEtiqueta.find(
+                                (t) => t.value === rua.etiquetaPalete
+                              )?.label
+                            }
+                          </span>
                         </div>
                       </div>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => removerRua(index)}
+                        onClick={() => removerRua(rua, index)}
                       >
                         Remover
                       </Button>
@@ -382,7 +764,6 @@ const CadastroStepByStep = () => {
           )}
         </div>
       )}
-
       {/* Step 3: Revisão */}
       {currentStep === 3 && (
         <Card>
@@ -399,31 +780,64 @@ const CadastroStepByStep = () => {
             <div>
               <h3 className="font-semibold mb-2">Informações do CD</h3>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div><strong>Nome:</strong> {formData.nome}</div>
-                <div><strong>CEP:</strong> {formData.cep}</div>
-                <div><strong>Endereço:</strong> {formData.endereco}</div>
-                <div><strong>Cidade:</strong> {formData.cidade}</div>
-                <div><strong>Responsável:</strong> {formData.responsavel || "N/A"}</div>
-                <div><strong>Email:</strong> {formData.email || "N/A"}</div>
+                <div>
+                  <strong>Nome:</strong> {formData.nome}
+                </div>
+                <div>
+                  <strong>CEP:</strong> {formData.cep}
+                </div>
+                <div>
+                  <strong>Endereço:</strong> {formData.endereco}
+                </div>
+                <div>
+                  <strong>Estado:</strong> {formData.estado}
+                </div>
+                <div>
+                  <strong>Cidade:</strong> {formData.cidade}
+                </div>
+                <div>
+                  <strong>Código:</strong> {formData.codigo}
+                </div>
+                <div>
+                  <strong>Responsável:</strong> {formData.responsavel || "N/A"}
+                </div>
+                <div>
+                  <strong>Email:</strong> {formData.email || "N/A"}
+                </div>
               </div>
             </div>
-            
+
             <div>
-              <h3 className="font-semibold mb-2">Ruas Configuradas ({formData.ruas.length})</h3>
+              <h3 className="font-semibold mb-2">
+                Ruas Configuradas ({formData.ruas.length})
+              </h3>
               <div className="space-y-2">
                 {formData.ruas.map((rua, index) => (
                   <div key={index} className="p-3 border rounded-lg">
                     <div className="flex items-center gap-2 mb-1">
                       <Badge>{rua.nome}</Badge>
-                      <span className="text-sm font-medium">{rua.tipoArmazenagem}</span>
+                      <span className="text-sm font-medium">
+                       {tiposArmazenagem.find((t) => t.value === rua.tipoArmazenagem)?.key || rua.tipoArmazenagem} 
+                      </span>
                     </div>
                     <div className="text-sm text-gray-600 mb-1">
-                      {rua.totalPosicoes} posições • {rua.paletePorPosicao} paletes por posição • 
-                      Total: {rua.totalPosicoes * rua.paletePorPosicao} paletes
+                      {rua.totalPosicoes} posições • {rua.paletePorPosicao}{" "}
+                      paletes por posição • Total:{" "}
+                      {rua.totalPosicoes * rua.paletePorPosicao} paletes
                     </div>
                     <div className="text-xs text-gray-500">
-                      Etiqueta Posição: {tiposEtiqueta.find(t => t.value === rua.etiquetaPosicao)?.label} • 
-                      Etiqueta Palete: {tiposEtiqueta.find(t => t.value === rua.etiquetaPalete)?.label}
+                      Etiqueta Posição:{" "}
+                      {
+                        tiposEtiqueta.find(
+                          (t) => t.value === rua.etiquetaPosicao
+                        )?.label
+                      }{" "}
+                      • Etiqueta Palete:{" "}
+                      {
+                        tiposEtiqueta.find(
+                          (t) => t.value === rua.etiquetaPalete
+                        )?.label
+                      }
                     </div>
                   </div>
                 ))}
@@ -432,7 +846,6 @@ const CadastroStepByStep = () => {
           </CardContent>
         </Card>
       )}
-
       {/* Navigation Buttons */}
       <div className="flex justify-between">
         <Button
@@ -444,7 +857,7 @@ const CadastroStepByStep = () => {
           <ArrowLeft className="h-4 w-4" />
           Anterior
         </Button>
-        
+
         {currentStep < 3 ? (
           <Button
             onClick={nextStep}

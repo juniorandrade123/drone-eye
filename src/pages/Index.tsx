@@ -18,15 +18,16 @@ import VisualizacaoGrid from "@/components/VisualizacaoGrid";
 import ExportacaoDados from "@/components/ExportacaoDados";
 import { AppSidebar } from "@/components/AppSidebar";
 import { logout } from "@/api/config/auth";
-
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [activeCadastroTab, setActiveCadastroTab] = useState("empresa");
+  const [cdId, setCdId] = useState<string | undefined>(undefined);
   const navigate = useNavigate();
 
-  const handleEditCD = (cdNome: string) => {
+  const handleEditCD = (cdId: string) => {
     setActiveTab("cadastros");
     setActiveCadastroTab("cd");
+    setCdId(cdId);
   };
 
   const handleLogout = () => {
@@ -58,7 +59,7 @@ const Index = () => {
       case "empresa":
         return <CadastroEmpresa />;
       case "cd":
-        return <CadastroCD />;
+        return <CadastroCD idCd={cdId} />;
       case "etiqueta-palete":
         return <CadastroEtiquetaPalete />;
       case "etiqueta-posicao":
@@ -73,11 +74,19 @@ const Index = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen w-full flex bg-gradient-to-br from-slate-50 to-blue-50">
-        <AppSidebar 
+        <AppSidebar
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={(tab) => {
+            setActiveTab(tab);
+            setCdId(undefined);
+          }}
           activeCadastroTab={activeCadastroTab}
-          setActiveCadastroTab={setActiveCadastroTab}
+          setActiveCadastroTab={(tab) => {
+            setActiveCadastroTab(tab);
+            if (tab === "cd") {
+              setCdId(undefined);
+            }
+          }}
         />
         
         <div className="flex-1 flex flex-col">

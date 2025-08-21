@@ -5,7 +5,7 @@ const authEndpoint = 'usuario/';
 
 export async function getUsers(incluirInativos) {
     const empresaId = buscaEmpresaId();
-    const response = await Api.get(authEndpoint + `?empresa_id=${empresaId}&incluir_inativos=${incluirInativos}`);
+    const response = await Api.get(authEndpoint + `?id_empresa=${empresaId}&incluir_inativos=${incluirInativos}`);
 
     return response;
 }
