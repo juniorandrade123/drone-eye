@@ -56,7 +56,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
       id?: string;
     }>,
   });
-  
+
   const [ruaAtual, setRuaAtual] = useState({
     nome: "",
     tipoArmazenagem: "",
@@ -72,12 +72,9 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
 
   const [idCd, setIdCd] = useState<string | undefined>(idCdProp?.idCd);
 
-  const estados = [
-    "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
-    "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
-    "RS", "RO", "RR", "SC", "SP", "SE", "TO"
-  ];
+  const estados = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
+  
   const carregarDadosIniciais = useCallback(async () => {
     if (idCd) {
       try {
@@ -94,7 +91,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
 
   useEffect(() => {
     listarCategorias();
-  }, []); 
+  }, []);
 
   useEffect(() => {
     if (idCd) {
@@ -133,7 +130,6 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
       setCurrentStep(currentStep - 1);
     }
   };
-
 
   const adicionarRua = () => {
     if (
@@ -193,7 +189,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
       setCurrentStep(2);
     }
   };
-  
+
   const removerRuaApi = async (rua: RuaDTO) => {
     if (rua.id) {
       const apiResponse = await ConfiguracaoRuaService.deleteRua(
@@ -306,24 +302,29 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
     }
   };
 
-   const listarRuas = async () => {
+  const listarRuas = async () => {
     if (!idCd) return;
 
     const response = await ConfiguracaoRuaService.listarRuas(idCd);
     if (response.ok) {
       const data: RuaDTO[] = response.data;
-      setFormData(prev => ({
-        ...prev, 
-        ruas: data.map((rua) => ({
+
+      const ruasComArmazenagem = await Promise.all(
+        data.map(async (rua) => ({
           nome: rua.nome_rua,
-          tipoArmazenagem: rua.tipo_armazenagem_id, // alterar para exibir nome da armazenagem
+          tipoArmazenagem:
+            (await getArmazenagemNomeById(rua.tipo_armazenagem_id)) || "",
           totalPosicoes: rua.total_posicoes,
           paletePorPosicao: rua.paletes_por_posicao,
           etiquetaPosicao: rua.etiqueta_posicao,
           etiquetaPalete: rua.etiqueta_palete,
           id_cd: rua.id_cd,
           id: rua.id,
-        })),
+        }))
+      );
+      setFormData((prev) => ({
+        ...prev,
+        ruas: ruasComArmazenagem,
       }));
     } else {
       toast({
@@ -333,6 +334,18 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
     }
   };
 
+  const getArmazenagemNomeById = async (
+    id_armazenagem: string
+  ): Promise<string | undefined> => {
+    const apiResponse = await TipoArmazenagemService.getArmazenagemById(
+      id_armazenagem
+    );
+    if (apiResponse.ok) {
+      const data: categoriaArmazenagemDTO = apiResponse.data;
+      return data.nome;
+    }
+    return undefined;
+  };
 
   const listarCategorias = async () => {
     const apiResponse = await TipoArmazenagemService.getArmazenagens();
@@ -355,11 +368,11 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
 
   const listarCdSelecionado = async () => {
     if (!idCd) return;
-    
+
     const response = await CentroDistribuicaoService.getCdById(idCd);
     if (response.ok) {
       const data = response.data;
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev, // Mantém as ruas existentes
         nome: data.nome,
         endereco: data.endereco,
@@ -369,7 +382,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
         email: data.email,
         telefone: data.telefone,
         codigo: data.codigo,
-        estado: data.estado
+        estado: data.estado,
       }));
     } else {
       toast({
@@ -379,9 +392,14 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
     }
   };
 
-
   const isStep1Valid =
-    formData.nome && formData.endereco && formData.cidade && formData.cep && formData.estado && formData.codigo && formData.email;
+    formData.nome &&
+    formData.endereco &&
+    formData.cidade &&
+    formData.cep &&
+    formData.estado &&
+    formData.codigo &&
+    formData.email;
   const isStep2Valid = formData.ruas.length > 0;
 
   return (
@@ -467,26 +485,26 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
                   placeholder="Rua, número"
                 />
               </div>
-                <div className="space-y-2">
+              <div className="space-y-2">
                 <Label>Estado *</Label>
                 <Select
                   value={formData.estado}
                   onValueChange={(value) =>
-                  setFormData({ ...formData, estado: value })
+                    setFormData({ ...formData, estado: value })
                   }
                 >
                   <SelectTrigger>
-                  <SelectValue placeholder="Selecione o estado" />
+                    <SelectValue placeholder="Selecione o estado" />
                   </SelectTrigger>
                   <SelectContent>
-                  {estados.map((uf) => (
-                    <SelectItem key={uf} value={uf}>
-                    {uf}
-                    </SelectItem>
-                  ))}
+                    {estados.map((uf) => (
+                      <SelectItem key={uf} value={uf}>
+                        {uf}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-                </div>
+              </div>
               <div className="space-y-2">
                 <Label>Cidade *</Label>
                 <Input
@@ -517,28 +535,28 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
                   placeholder="Nome do responsável"
                 />
               </div>
-                <div className="space-y-2">
+              <div className="space-y-2">
                 <Label>Email *</Label>
                 <Input
                   type="email"
                   value={formData.email}
                   onChange={(e) => {
-                  setFormData({ ...formData, email: e.target.value });
+                    setFormData({ ...formData, email: e.target.value });
                   }}
                   placeholder="email@exemplo.com"
                   onBlur={(e) => {
-                  const email = e.target.value;
-                  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                  if (email && !emailRegex.test(email)) {
-                    toast({
-                    title: "Email inválido",
-                    description: "Digite um email válido.",
-                    variant: "destructive",
-                    });
-                  }
+                    const email = e.target.value;
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (email && !emailRegex.test(email)) {
+                      toast({
+                        title: "Email inválido",
+                        description: "Digite um email válido.",
+                        variant: "destructive",
+                      });
+                    }
                   }}
                 />
-                </div>
+              </div>
               <div className="space-y-2">
                 <Label>Telefone</Label>
                 <Input
@@ -582,8 +600,9 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
                   <Label>Tipo de Armazenagem</Label>
                   <Select
                     value={ruaAtual.tipoArmazenagem}
-                    onValueChange={(value) =>
+                    onValueChange={(value) =>{
                       setRuaAtual({ ...ruaAtual, tipoArmazenagem: value })
+                    }
                     }
                   >
                     <SelectTrigger>
@@ -707,7 +726,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
                         <div className="flex items-center gap-4">
                           <Badge variant="outline">{rua.nome}</Badge>
                           <span className="text-sm text-gray-600">
-                            {rua.tipoArmazenagem} • {rua.totalPosicoes} posições
+                            {tiposArmazenagem.find((t) => t.value === rua.tipoArmazenagem)?.key || rua.tipoArmazenagem}• {rua.totalPosicoes} posições
                             • {rua.paletePorPosicao} paletes/posição
                           </span>
                         </div>
@@ -798,7 +817,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
                     <div className="flex items-center gap-2 mb-1">
                       <Badge>{rua.nome}</Badge>
                       <span className="text-sm font-medium">
-                        {rua.tipoArmazenagem}
+                       {tiposArmazenagem.find((t) => t.value === rua.tipoArmazenagem)?.key || rua.tipoArmazenagem} 
                       </span>
                     </div>
                     <div className="text-sm text-gray-600 mb-1">

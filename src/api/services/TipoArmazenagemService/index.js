@@ -13,6 +13,14 @@ export async function getArmazenagens(ativo) {
     return response;
 }
 
+export async function getArmazenagemById(id_armazenagem) {
+    const empresaId = buscaEmpresaId();
+
+    const response = await Api.get(`${authEndpoint}/${empresaId}/tipos-armazenagem/${id_armazenagem}`);
+    return response;
+}
+
+
 export async function createArmazenagem(payload) {
     const empresaId = buscaEmpresaId();
     const response = await Api.post(`${authEndpoint}/${empresaId}/tipos-armazenagem`, payload);
