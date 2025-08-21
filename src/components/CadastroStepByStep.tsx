@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Card,
   CardContent,
@@ -56,6 +56,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
       id?: string;
     }>,
   });
+  
   const [ruaAtual, setRuaAtual] = useState({
     nome: "",
     tipoArmazenagem: "",
@@ -69,20 +70,37 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
     Array<{ key: string; value: string }>
   >([]);
 
-  const [idCd, setIdCd] = useState<string | undefined>();
-  
+  const [idCd, setIdCd] = useState<string | undefined>(idCdProp?.idCd);
+
   const estados = [
     "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
     "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
     "RS", "RO", "RR", "SC", "SP", "SE", "TO"
   ];
 
-  useEffect(() => {
-    if (idCdProp) {
-      setIdCd(idCdProp.idCd);
+  const carregarDadosIniciais = useCallback(async () => {
+    if (idCd) {
+      try {
+        await listarCdSelecionado();
+        await listarRuas();
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar dados iniciais",
+        });
+      }
     }
-  }, [idCdProp]);
+  }, [idCd]);
 
+  useEffect(() => {
+    listarCategorias();
+  }, []); 
+
+  useEffect(() => {
+    if (idCd) {
+      carregarDadosIniciais();
+    }
+  }, [idCd, carregarDadosIniciais]);
   const { toast } = useToast();
 
   const tiposEtiqueta = [
@@ -116,6 +134,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
     }
   };
 
+
   const adicionarRua = () => {
     if (
       ruaAtual.nome &&
@@ -138,12 +157,12 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
     }
   };
 
-  const criarRua = async () => {
+  const criarRua = async (id_Cd: string) => {
     let allOk = true;
     for (const rua of formData.ruas) {
       if (!rua.id) {
         const payload = {
-          id_cd: idCd,
+          id_cd: id_Cd,
           nome_rua: rua.nome || "",
           tipo_armazenagem_id: rua.tipoArmazenagem || "",
           total_posicoes: rua.totalPosicoes || 0,
@@ -256,7 +275,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
         estado: "",
         ruas: [],
       });
-      criarRua();
+      criarRua(apiResponse.data.id);
     } else {
       toast({
         title: "Erro",
@@ -278,7 +297,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
 
     if (apiResponse.ok) {
       setIdCd(apiResponse.data.id);
-      criarRua();
+      criarRua(apiResponse.data.id);
     } else {
       toast({
         title: "Erro",
@@ -287,33 +306,33 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
     }
   };
 
-  const listarRuas = async () => {
-    if (idCd) {
-      const response = await ConfiguracaoRuaService.listarRuas(idCd);
+   const listarRuas = async () => {
+    if (!idCd) return;
 
-      if (response.ok) {
-        const data: RuaDTO[] = response.data;
-        setFormData({
-          ...formData,
-          ruas: data.map((rua) => ({
-            nome: rua.nome_rua,
-            tipoArmazenagem: rua.tipo_armazenagem_id,
-            totalPosicoes: rua.total_posicoes,
-            paletePorPosicao: rua.paletes_por_posicao,
-            etiquetaPosicao: rua.etiqueta_posicao,
-            etiquetaPalete: rua.etiqueta_palete,
-            id_cd: rua.id_cd,
-            id: rua.id,
-          })),
-        });
-      } else {
-        toast({
-          title: "Erro ao buscar ruas",
-          description: response.error.message,
-        });
-      }
+    const response = await ConfiguracaoRuaService.listarRuas(idCd);
+    if (response.ok) {
+      const data: RuaDTO[] = response.data;
+      setFormData(prev => ({
+        ...prev, 
+        ruas: data.map((rua) => ({
+          nome: rua.nome_rua,
+          tipoArmazenagem: rua.tipo_armazenagem_id, // alterar para exibir nome da armazenagem
+          totalPosicoes: rua.total_posicoes,
+          paletePorPosicao: rua.paletes_por_posicao,
+          etiquetaPosicao: rua.etiqueta_posicao,
+          etiquetaPalete: rua.etiqueta_palete,
+          id_cd: rua.id_cd,
+          id: rua.id,
+        })),
+      }));
+    } else {
+      toast({
+        title: "Erro ao buscar ruas",
+        description: response.error.message,
+      });
     }
   };
+
 
   const listarCategorias = async () => {
     const apiResponse = await TipoArmazenagemService.getArmazenagens();
@@ -335,11 +354,13 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
   };
 
   const listarCdSelecionado = async () => {
+    if (!idCd) return;
+    
     const response = await CentroDistribuicaoService.getCdById(idCd);
     if (response.ok) {
       const data = response.data;
-      setFormData((prev) => ({
-        ...prev,
+      setFormData(prev => ({
+        ...prev, // Mantém as ruas existentes
         nome: data.nome,
         endereco: data.endereco,
         cidade: data.cidade,
@@ -349,7 +370,6 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
         telefone: data.telefone,
         codigo: data.codigo,
         estado: data.estado
-
       }));
     } else {
       toast({
@@ -359,16 +379,9 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
     }
   };
 
-  useEffect(() => {
-    listarCategorias();
-    if (idCd) {
-      listarCdSelecionado();
-      listarRuas();
-    }
-  }, [idCd]);
 
   const isStep1Valid =
-    formData.nome && formData.endereco && formData.cidade && formData.cep;
+    formData.nome && formData.endereco && formData.cidade && formData.cep && formData.estado && formData.codigo && formData.email;
   const isStep2Valid = formData.ruas.length > 0;
 
   return (
@@ -504,17 +517,28 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
                   placeholder="Nome do responsável"
                 />
               </div>
-              <div className="space-y-2">
+                <div className="space-y-2">
                 <Label>Email *</Label>
                 <Input
                   type="email"
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
+                  onChange={(e) => {
+                  setFormData({ ...formData, email: e.target.value });
+                  }}
                   placeholder="email@exemplo.com"
+                  onBlur={(e) => {
+                  const email = e.target.value;
+                  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                  if (email && !emailRegex.test(email)) {
+                    toast({
+                    title: "Email inválido",
+                    description: "Digite um email válido.",
+                    variant: "destructive",
+                    });
+                  }
+                  }}
                 />
-              </div>
+                </div>
               <div className="space-y-2">
                 <Label>Telefone</Label>
                 <Input
@@ -747,7 +771,13 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
                   <strong>Endereço:</strong> {formData.endereco}
                 </div>
                 <div>
+                  <strong>Estado:</strong> {formData.estado}
+                </div>
+                <div>
                   <strong>Cidade:</strong> {formData.cidade}
+                </div>
+                <div>
+                  <strong>Código:</strong> {formData.codigo}
                 </div>
                 <div>
                   <strong>Responsável:</strong> {formData.responsavel || "N/A"}
