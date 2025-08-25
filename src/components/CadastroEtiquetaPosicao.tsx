@@ -195,7 +195,7 @@ const CadastroEtiquetaPosicao = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="bloco">Bloco *</Label>
                 <Input
@@ -216,7 +216,7 @@ const CadastroEtiquetaPosicao = () => {
                   required
                 />
               </div>
-              <div>
+              {/* <div>
                 <Label htmlFor="modulo">Módulo</Label>
                 <Input
                   id="modulo"
@@ -233,7 +233,7 @@ const CadastroEtiquetaPosicao = () => {
                   onChange={(e) => setFormData({ ...formData, nivel: e.target.value })}
                   placeholder="01"
                 />
-              </div>
+              </div> */}
               <div>
                 <Label htmlFor="posicao">Posição</Label>
                 <Input

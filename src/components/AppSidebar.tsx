@@ -56,8 +56,8 @@ export function AppSidebar({ activeTab, setActiveTab, activeCadastroTab, setActi
     { id: "empresa", title: "Empresa", icon: Building2 },
     { id: "cd", title: "CD", icon: Package },
     // { id: "etiqueta-palete", title: "Etiqueta Palete", icon: Tag },
-    // { id: "etiqueta-posicao", title: "Etiqueta Posição", icon: MapPin },
-    // { id: "tipo-armazenagem", title: "Tipo Armazenagem", icon: FileText },
+    { id: "etiqueta-posicao", title: "Etiqueta Posição", icon: MapPin },
+    { id: "tipo-armazenagem", title: "Tipo Armazenagem", icon: FileText },
   ];
 
   const adminItems = [

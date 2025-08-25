@@ -6,6 +6,7 @@ import * as EmpresaService from './EmpresaService';
 import * as ConfiguracaoRuaService from './ConfiguracaoRuaService';
 import * as CategoriaArmazenagemService from './CategoriaArmazenagemService';
 import * as TipoArmazenagemService from './TipoArmazenagemService';
+import * as PosicaoEstoqueService from './PosicaoEstoqueService';
 
 export {
     LoginService,
@@ -15,5 +16,6 @@ export {
     EmpresaService,
     ConfiguracaoRuaService,
     CategoriaArmazenagemService,
-    TipoArmazenagemService
+    TipoArmazenagemService,
+    PosicaoEstoqueService
 };
