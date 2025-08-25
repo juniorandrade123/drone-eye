@@ -1,31 +1,55 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Edit, Trash2, Archive } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { TipoArmazenagemService } from "@/api/services";
+import { CategoriaArmazenagemService } from "@/api/services";
+import { useEffect } from "react";
+import { get } from "http";
 
 interface TipoArmazenagem {
   id: string;
   codigo: string;
   nome: string;
   descricao: string;
-  capacidadeMaxima: number;
-  alturaMaxima: number;
-  pesoMaximo: number;
-  permiteEmpilhamento: boolean;
-  permiteRotacao: boolean;
-  requerEquipamento: boolean;
-  equipamentoNecessario: string;
-  categoria: string;
-  status: string;
-  dataRegistro: string;
+  capacidade_max_paletes: number;
+  altura_max_cm: number;
+  peso_max_kg: number;
+  permite_empilhamento: boolean;
+  permite_rotacao: boolean;
+  requer_equipamento: boolean;
+  equipamento_necessario: string;
+  id_categoria: string;
+  id_empresa: string;
+  ativo: boolean;
+  criado_em: string;
 }
 
 const CadastroTipoArmazenagem = () => {
@@ -33,43 +57,55 @@ const CadastroTipoArmazenagem = () => {
   const [tipos, setTipos] = useState<TipoArmazenagem[]>([
     {
       id: "1",
-      codigo: "PP001",
-      nome: "Porta Paletes",
-      descricao: "Sistema de armazenagem vertical com estruturas metálicas",
-      capacidadeMaxima: 2,
-      alturaMaxima: 1200,
-      pesoMaximo: 2000,
-      permiteEmpilhamento: false,
-      permiteRotacao: true,
-      requerEquipamento: true,
-      equipamentoNecessario: "Empilhadeira",
-      categoria: "Estruturado",
-      status: "Ativo",
-      dataRegistro: "2024-01-15"
-    }
+      codigo: "TIPO-001",
+      nome: "Armazenagem Paletizada",
+      descricao: "Estrutura destinada a pallets padrão PBR",
+      capacidade_max_paletes: 120,
+      altura_max_cm: 250,
+      peso_max_kg: 1000,
+      permite_empilhamento: true,
+      permite_rotacao: false,
+      requer_equipamento: true,
+      equipamento_necessario: "Empilhadeira",
+      id_categoria: "6ff9e539-6bb3-409e-87cb-876f19ed8100",
+      id_empresa: "0824afae-9e9b-4150-8df5-f690485f6bfc",
+      ativo: true,
+      criado_em: "2025-08-20T17:51:56.504362Z",
+    },
   ]);
 
   const [formData, setFormData] = useState({
     codigo: "",
     nome: "",
     descricao: "",
-    capacidadeMaxima: "",
-    alturaMaxima: "",
-    pesoMaximo: "",
-    permiteEmpilhamento: false,
-    permiteRotacao: false,
-    requerEquipamento: false,
-    equipamentoNecessario: "",
-    categoria: "",
-    status: "Ativo"
+    capacidade_max_paletes: "",
+    altura_max_cm: "",
+    peso_max_kg: "",
+    permite_empilhamento: false,
+    permite_rotacao: false,
+    requer_equipamento: false,
+    equipamento_necessario: "",
+    id_categoria: "",
+    ativo: true,
   });
+
+  interface CategoriaArmazenagem {
+    id: string;
+    nome: string;
+    descricao: string;
+    ativo: boolean;
+    criado_em: string;
+    id_empresa: string;
+  }
+
+  const [categorias, setCategorias] = useState<CategoriaArmazenagem[]>([]);
 
   const [editando, setEditando] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.codigo || !formData.nome || !formData.categoria) {
+
+    if (!formData.codigo || !formData.nome || !formData.id_categoria) {
       toast({
         title: "Erro",
         description: "Código, nome e categoria são obrigatórios",
@@ -83,46 +119,40 @@ const CadastroTipoArmazenagem = () => {
       codigo: formData.codigo,
       nome: formData.nome,
       descricao: formData.descricao,
-      capacidadeMaxima: Number(formData.capacidadeMaxima),
-      alturaMaxima: Number(formData.alturaMaxima),
-      pesoMaximo: Number(formData.pesoMaximo),
-      permiteEmpilhamento: formData.permiteEmpilhamento,
-      permiteRotacao: formData.permiteRotacao,
-      requerEquipamento: formData.requerEquipamento,
-      equipamentoNecessario: formData.equipamentoNecessario,
-      categoria: formData.categoria,
-      status: formData.status,
-      dataRegistro: editando ? tipos.find(t => t.id === editando)?.dataRegistro || "" : new Date().toISOString().split('T')[0]
+      capacidade_max_paletes: Number(formData.capacidade_max_paletes),
+      altura_max_cm: Number(formData.altura_max_cm),
+      peso_max_kg: Number(formData.peso_max_kg),
+      permite_empilhamento: formData.permite_empilhamento,
+      permite_rotacao: formData.permite_rotacao,
+      requer_equipamento: formData.requer_equipamento,
+      equipamento_necessario: formData.equipamento_necessario,
+      id_categoria: formData.id_categoria,
+      id_empresa: "",
+      ativo: formData.ativo,
+      criado_em: editando
+        ? tipos.find((t) => t.id === editando)?.criado_em || ""
+        : new Date().toISOString(),
     };
 
     if (editando) {
-      setTipos(tipos.map(t => t.id === editando ? novoTipo : t));
-      setEditando(null);
-      toast({
-        title: "Sucesso",
-        description: "Tipo de armazenagem atualizado com sucesso!",
-      });
+      updateTipoArmazenagem(novoTipo);
     } else {
-      setTipos([...tipos, novoTipo]);
-      toast({
-        title: "Sucesso",
-        description: "Tipo de armazenagem cadastrado com sucesso!",
-      });
+      createTipoArmazenagem(novoTipo);
     }
 
     setFormData({
       codigo: "",
       nome: "",
       descricao: "",
-      capacidadeMaxima: "",
-      alturaMaxima: "",
-      pesoMaximo: "",
-      permiteEmpilhamento: false,
-      permiteRotacao: false,
-      requerEquipamento: false,
-      equipamentoNecessario: "",
-      categoria: "",
-      status: "Ativo"
+      capacidade_max_paletes: "",
+      altura_max_cm: "",
+      peso_max_kg: "",
+      permite_empilhamento: false,
+      permite_rotacao: false,
+      requer_equipamento: false,
+      equipamento_necessario: "",
+      id_categoria: "",
+      ativo: true,
     });
   };
 
@@ -131,26 +161,101 @@ const CadastroTipoArmazenagem = () => {
       codigo: tipo.codigo,
       nome: tipo.nome,
       descricao: tipo.descricao,
-      capacidadeMaxima: tipo.capacidadeMaxima.toString(),
-      alturaMaxima: tipo.alturaMaxima.toString(),
-      pesoMaximo: tipo.pesoMaximo.toString(),
-      permiteEmpilhamento: tipo.permiteEmpilhamento,
-      permiteRotacao: tipo.permiteRotacao,
-      requerEquipamento: tipo.requerEquipamento,
-      equipamentoNecessario: tipo.equipamentoNecessario,
-      categoria: tipo.categoria,
-      status: tipo.status
+      capacidade_max_paletes: tipo.capacidade_max_paletes.toString(),
+      altura_max_cm: tipo.altura_max_cm.toString(),
+      peso_max_kg: tipo.peso_max_kg.toString(),
+      permite_empilhamento: tipo.permite_empilhamento,
+      permite_rotacao: tipo.permite_rotacao,
+      requer_equipamento: tipo.requer_equipamento,
+      equipamento_necessario: tipo.equipamento_necessario,
+      id_categoria: tipo.id_categoria,
+      ativo: tipo.ativo,
     });
     setEditando(tipo.id);
   };
 
-  const handleDelete = (id: string) => {
-    setTipos(tipos.filter(t => t.id !== id));
-    toast({
-      title: "Sucesso",
-      description: "Tipo de armazenagem removido com sucesso!",
-    });
+  const handleDelete = async (id: string) => {
+    const apiResponse = await TipoArmazenagemService.deleteArmazenagem(id);
+    if (apiResponse.ok) {
+      toast({
+        title: "Sucesso",
+        description: "Tipo de armazenagem removido com sucesso!",
+      });
+      getTiposArmazenagem();
+    } else {
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover o tipo de armazenagem.",
+      });
+    }
   };
+
+  const getTiposArmazenagem = async () => {
+    const apiResponse = await TipoArmazenagemService.getArmazenagens();
+    if (apiResponse.ok) {
+      setTipos(apiResponse.data);
+    } else {
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os tipos de armazenagem.",
+      });
+    }
+  };
+
+  const getCategorias = async () => {
+    const apiResponse = await CategoriaArmazenagemService.getCategorias();
+    if (apiResponse.ok) {
+      setCategorias(apiResponse.data);
+    } else {
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar as categorias de armazenagem.",
+      });
+    }
+  };
+
+  const getCategoriaNomeById = (id: string): string => {
+    const categoria = categorias.find((cat) => cat.id === id);
+    return categoria ? categoria.nome : "";
+  };
+
+  const createTipoArmazenagem = async (data: TipoArmazenagem) => {
+    const apiResponse = await TipoArmazenagemService.createArmazenagem(data);
+    if (apiResponse.ok) {
+      toast({
+        title: "Sucesso",
+        description: "Tipo de armazenagem criado com sucesso!",
+      });
+      getTiposArmazenagem();
+    } else {
+      toast({
+        title: "Erro",
+        description: "Não foi possível criar o tipo de armazenagem.",
+      });
+    }
+  };
+
+  const updateTipoArmazenagem = async (data: TipoArmazenagem) => {
+    const apiResponse = await TipoArmazenagemService.updateArmazenagem(data);
+    if (apiResponse.ok) {
+      toast({
+        title: "Sucesso",
+        description: "Tipo de armazenagem atualizado com sucesso!",
+      });
+      getTiposArmazenagem();
+      setEditando(null);
+    } else {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o tipo de armazenagem.",
+      });
+    }
+  };
+
+  useEffect(() => {
+    getCategorias();
+    getTiposArmazenagem();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -172,7 +277,9 @@ const CadastroTipoArmazenagem = () => {
                 <Input
                   id="codigo"
                   value={formData.codigo}
-                  onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, codigo: e.target.value })
+                  }
                   placeholder="PP001"
                   required
                 />
@@ -182,7 +289,9 @@ const CadastroTipoArmazenagem = () => {
                 <Input
                   id="nome"
                   value={formData.nome}
-                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, nome: e.target.value })
+                  }
                   placeholder="Porta Paletes"
                   required
                 />
@@ -194,40 +303,53 @@ const CadastroTipoArmazenagem = () => {
               <Textarea
                 id="descricao"
                 value={formData.descricao}
-                onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, descricao: e.target.value })
+                }
                 placeholder="Descrição detalhada do tipo de armazenagem..."
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="capacidadeMaxima">Capacidade Máxima (paletes)</Label>
+                <Label htmlFor="capacidade_max_paletes">
+                  Capacidade Máxima (paletes)
+                </Label>
                 <Input
-                  id="capacidadeMaxima"
+                  id="capacidade_max_paletes"
                   type="number"
-                  value={formData.capacidadeMaxima}
-                  onChange={(e) => setFormData({ ...formData, capacidadeMaxima: e.target.value })}
-                  placeholder="2"
+                  value={formData.capacidade_max_paletes}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      capacidade_max_paletes: e.target.value,
+                    })
+                  }
+                  placeholder="120"
                 />
               </div>
               <div>
-                <Label htmlFor="alturaMaxima">Altura Máxima (cm)</Label>
+                <Label htmlFor="altura_max_cm">Altura Máxima (cm)</Label>
                 <Input
-                  id="alturaMaxima"
+                  id="altura_max_cm"
                   type="number"
-                  value={formData.alturaMaxima}
-                  onChange={(e) => setFormData({ ...formData, alturaMaxima: e.target.value })}
-                  placeholder="1200"
+                  value={formData.altura_max_cm}
+                  onChange={(e) =>
+                    setFormData({ ...formData, altura_max_cm: e.target.value })
+                  }
+                  placeholder="250"
                 />
               </div>
               <div>
-                <Label htmlFor="pesoMaximo">Peso Máximo (kg)</Label>
+                <Label htmlFor="peso_max_kg">Peso Máximo (kg)</Label>
                 <Input
-                  id="pesoMaximo"
+                  id="peso_max_kg"
                   type="number"
-                  value={formData.pesoMaximo}
-                  onChange={(e) => setFormData({ ...formData, pesoMaximo: e.target.value })}
-                  placeholder="2000"
+                  value={formData.peso_max_kg}
+                  onChange={(e) =>
+                    setFormData({ ...formData, peso_max_kg: e.target.value })
+                  }
+                  placeholder="1000"
                 />
               </div>
             </div>
@@ -235,26 +357,39 @@ const CadastroTipoArmazenagem = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="categoria">Categoria *</Label>
-                <Select value={formData.categoria} onValueChange={(value) => setFormData({ ...formData, categoria: value })}>
+                <Select
+                  value={formData.id_categoria}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, id_categoria: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a categoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Estruturado">Estruturado</SelectItem>
-                    <SelectItem value="Piso">Piso</SelectItem>
-                    <SelectItem value="Suspenso">Suspenso</SelectItem>
-                    <SelectItem value="Automatizado">Automatizado</SelectItem>
+                    {categorias.map((categoria) => (
+                      <SelectItem key={categoria.id} value={categoria.id}>
+                        {categoria.nome}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="equipamentoNecessario">Equipamento Necessário</Label>
+                <Label htmlFor="equipamento_necessario">
+                  Equipamento Necessário
+                </Label>
                 <Input
-                  id="equipamentoNecessario"
-                  value={formData.equipamentoNecessario}
-                  onChange={(e) => setFormData({ ...formData, equipamentoNecessario: e.target.value })}
+                  id="equipamento_necessario"
+                  value={formData.equipamento_necessario}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      equipamento_necessario: e.target.value,
+                    })
+                  }
                   placeholder="Empilhadeira, Ponte Rolante, etc."
-                  disabled={!formData.requerEquipamento}
+                  disabled={!formData.requer_equipamento}
                 />
               </div>
             </div>
@@ -264,40 +399,56 @@ const CadastroTipoArmazenagem = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex items-center space-x-2">
                   <Checkbox
-                    id="permiteEmpilhamento"
-                    checked={formData.permiteEmpilhamento}
-                    onCheckedChange={(checked) => 
-                      setFormData({ ...formData, permiteEmpilhamento: checked as boolean })
+                    id="permite_empilhamento"
+                    checked={formData.permite_empilhamento}
+                    onCheckedChange={(checked) =>
+                      setFormData({
+                        ...formData,
+                        permite_empilhamento: checked as boolean,
+                      })
                     }
                   />
-                  <Label htmlFor="permiteEmpilhamento">Permite Empilhamento</Label>
+                  <Label htmlFor="permite_empilhamento">
+                    Permite Empilhamento
+                  </Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox
-                    id="permiteRotacao"
-                    checked={formData.permiteRotacao}
-                    onCheckedChange={(checked) => 
-                      setFormData({ ...formData, permiteRotacao: checked as boolean })
+                    id="permite_rotacao"
+                    checked={formData.permite_rotacao}
+                    onCheckedChange={(checked) =>
+                      setFormData({
+                        ...formData,
+                        permite_rotacao: checked as boolean,
+                      })
                     }
                   />
-                  <Label htmlFor="permiteRotacao">Permite Rotação</Label>
+                  <Label htmlFor="permite_rotacao">Permite Rotação</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox
-                    id="requerEquipamento"
-                    checked={formData.requerEquipamento}
-                    onCheckedChange={(checked) => 
-                      setFormData({ ...formData, requerEquipamento: checked as boolean })
+                    id="requer_equipamento"
+                    checked={formData.requer_equipamento}
+                    onCheckedChange={(checked) =>
+                      setFormData({
+                        ...formData,
+                        requer_equipamento: checked as boolean,
+                      })
                     }
                   />
-                  <Label htmlFor="requerEquipamento">Requer Equipamento</Label>
+                  <Label htmlFor="requer_equipamento">Requer Equipamento</Label>
                 </div>
               </div>
             </div>
 
             <div>
-              <Label htmlFor="status">Status</Label>
-              <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+              <Label htmlFor="ativo">Status</Label>
+              <Select
+                value={formData.ativo ? "Ativo" : "Inativo"}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, ativo: value === "Ativo" })
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -333,7 +484,7 @@ const CadastroTipoArmazenagem = () => {
                 <TableHead>Capacidade</TableHead>
                 <TableHead>Peso Máx.</TableHead>
                 <TableHead>Características</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Ativo</TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -342,25 +493,33 @@ const CadastroTipoArmazenagem = () => {
                 <TableRow key={tipo.id}>
                   <TableCell className="font-medium">{tipo.codigo}</TableCell>
                   <TableCell>{tipo.nome}</TableCell>
-                  <TableCell>{tipo.categoria}</TableCell>
-                  <TableCell>{tipo.capacidadeMaxima} paletes</TableCell>
-                  <TableCell>{tipo.pesoMaximo} kg</TableCell>
+                  <TableCell>
+                    {getCategoriaNomeById(tipo.id_categoria)}
+                  </TableCell>
+                  <TableCell>{tipo.capacidade_max_paletes} paletes</TableCell>
+                  <TableCell>{tipo.peso_max_kg} kg</TableCell>
                   <TableCell>
                     <div className="flex gap-1 flex-wrap">
-                      {tipo.permiteEmpilhamento && (
-                        <Badge variant="outline" className="text-xs">Empilha</Badge>
+                      {tipo.permite_empilhamento && (
+                        <Badge variant="outline" className="text-xs">
+                          Empilha
+                        </Badge>
                       )}
-                      {tipo.permiteRotacao && (
-                        <Badge variant="outline" className="text-xs">Rotação</Badge>
+                      {tipo.permite_rotacao && (
+                        <Badge variant="outline" className="text-xs">
+                          Rotação
+                        </Badge>
                       )}
-                      {tipo.requerEquipamento && (
-                        <Badge variant="outline" className="text-xs">Equip.</Badge>
+                      {tipo.requer_equipamento && (
+                        <Badge variant="outline" className="text-xs">
+                          Equip.
+                        </Badge>
                       )}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={tipo.status === "Ativo" ? "default" : "secondary"}>
-                      {tipo.status}
+                    <Badge variant={tipo.ativo ? "default" : "secondary"}>
+                      {tipo.ativo ? "Ativo" : "Inativo"}
                     </Badge>
                   </TableCell>
                   <TableCell>
