@@ -122,8 +122,7 @@ const CadastroEtiquetaPosicao = () => {
     }
   };
 
-  const handleEdit = (etiqueta: any) => {
-    console.log(etiqueta);
+  const handleEdit = (etiqueta: EtiquetaPosicao) => {
     getRuas();
     setFormData({
       codigo: etiqueta.codigo,
@@ -139,6 +138,13 @@ const CadastroEtiquetaPosicao = () => {
       status: etiqueta.status,
     });
     setEditando(etiqueta.id);
+
+    setTimeout(() => {
+      setFormData((prev) => ({
+        ...prev,
+        rua: etiqueta.rua,
+      }));
+    }, 300);
   };
 
   const handleDelete = async (etiqueta: EtiquetaPosicao) => {
@@ -211,11 +217,10 @@ const CadastroEtiquetaPosicao = () => {
     };
 
     const apiResponse = await PosicaoEstoqueService.createPosicao(etiqueta);
-    console.log(apiResponse)
     if (apiResponse.ok) {
       toast({
         title: "Sucesso",
-        description:"Etiqueta de posição cadastrada com sucesso!",
+        description: "Etiqueta de posição cadastrada com sucesso!",
       });
       setFormData({
         codigo: "",
@@ -234,13 +239,13 @@ const CadastroEtiquetaPosicao = () => {
     } else {
       toast({
         title: "Erro",
-        description:  apiResponse.error.message ||  "Erro ao cadastrar etiqueta de posição.",
+        description:
+          apiResponse.error.message || "Erro ao cadastrar etiqueta de posição.",
       });
     }
   };
 
   const updateEtiqueta = async () => {
-
     const etiqueta: EditEtiquetaPosicao = {
       ativo: formData.status === "Ativo",
       capacidade_paletes: Number(formData.capacidade),
@@ -251,7 +256,11 @@ const CadastroEtiquetaPosicao = () => {
 
     const idCd = cd.find((item) => item.nome === formData.cd)?.id_cd || "";
 
-    const apiResponse = await PosicaoEstoqueService.updatePosicao(etiqueta,editando,idCd);
+    const apiResponse = await PosicaoEstoqueService.updatePosicao(
+      etiqueta,
+      editando,
+      idCd
+    );
 
     if (apiResponse.ok) {
       toast({
@@ -563,10 +572,12 @@ const CadastroEtiquetaPosicao = () => {
                     {etiqueta.nivel && `-${etiqueta.nivel}`}
                     {etiqueta.posicao && `-${etiqueta.posicao}`}
                   </TableCell>
-                    <TableCell>
+                  <TableCell>
                     {etiqueta.capacidade > 0 &&
-                      `${etiqueta.capacidade} palete${etiqueta.capacidade === 1 ? "" : "s"}`}
-                    </TableCell>
+                      `${etiqueta.capacidade} palete${
+                        etiqueta.capacidade === 1 ? "" : "s"
+                      }`}
+                  </TableCell>
                   <TableCell>
                     {getNomeTipoArmazenagem(etiqueta.tipoArmazenagem)}
                   </TableCell>
