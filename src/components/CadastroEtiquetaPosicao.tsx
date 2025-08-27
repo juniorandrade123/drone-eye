@@ -1,14 +1,43 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, MapPin } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { PosicaoEstoqueService } from "@/api/services";
+import { TipoArmazenagemService } from "@/api/services";
+import { CentroDistribuicaoService } from "@/api/services";
+import { DashboardService } from "@/api/services";
+import { ConfiguracaoRuaService } from "@/api/services";
+import { TipoArmazenagem } from "@/types/tipo-armazenagem-model";
+import { useEffect } from "react";
+import { CentroDistribuicaoCard } from "@/types/dashboard-models";
+import { PosicaoEstoque } from "@/types/posicao-estoque-model";
+import { RuaDTO } from "@/types/rua-model";
 
 interface EtiquetaPosicao {
   id: string;
@@ -26,25 +55,36 @@ interface EtiquetaPosicao {
   dataRegistro: string;
 }
 
+export type CreateEtiquetaPosicao = {
+  id?: string;
+  ativo: boolean;
+  bloco: string;
+  capacidade_paletes: number;
+  descricao: string;
+  id_cd: string;
+  id_empresa: string;
+  id_rua: string;
+  modulo: string;
+  nivel: string;
+  posicao: string;
+  status: string;
+  tipo_armazenagem_id: string;
+};
+
+export type EditEtiquetaPosicao = {
+  ativo: boolean;
+  capacidade_paletes: number;
+  descricao: string;
+  nivel: string;
+  status: string;
+};
+
 const CadastroEtiquetaPosicao = () => {
   const { toast } = useToast();
-  const [etiquetas, setEtiquetas] = useState<EtiquetaPosicao[]>([
-    {
-      id: "1",
-      codigo: "POS-A-001-01-01",
-      descricao: "Posição A-001 Nível 1",
-      cd: "CD São Paulo",
-      bloco: "A",
-      rua: "001",
-      modulo: "01",
-      nivel: "01",
-      posicao: "01",
-      capacidade: 2,
-      tipoArmazenagem: "Porta Paletes",
-      status: "Ativo",
-      dataRegistro: "2024-01-15"
-    }
-  ]);
+  const [etiquetas, setEtiquetas] = useState<EtiquetaPosicao[]>([]);
+  const [tipos, setTipos] = useState<TipoArmazenagem[]>([]);
+  const [cd, setCd] = useState<CentroDistribuicaoCard[]>([]);
+  const [ruas, setRuas] = useState<RuaDTO[]>([]);
 
   const [formData, setFormData] = useState({
     codigo: "",
@@ -57,14 +97,14 @@ const CadastroEtiquetaPosicao = () => {
     posicao: "",
     capacidade: "",
     tipoArmazenagem: "",
-    status: "Ativo"
+    status: "Ativo",
   });
 
   const [editando, setEditando] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.codigo || !formData.cd || !formData.bloco || !formData.rua) {
       toast({
         title: "Erro",
@@ -74,76 +114,234 @@ const CadastroEtiquetaPosicao = () => {
       return;
     }
 
-    const novaEtiqueta: EtiquetaPosicao = {
-      id: editando || Date.now().toString(),
-      codigo: formData.codigo,
-      descricao: formData.descricao,
-      cd: formData.cd,
-      bloco: formData.bloco,
-      rua: formData.rua,
-      modulo: formData.modulo,
-      nivel: formData.nivel,
-      posicao: formData.posicao,
-      capacidade: Number(formData.capacidade),
-      tipoArmazenagem: formData.tipoArmazenagem,
-      status: formData.status,
-      dataRegistro: editando ? etiquetas.find(e => e.id === editando)?.dataRegistro || "" : new Date().toISOString().split('T')[0]
-    };
-
     if (editando) {
-      setEtiquetas(etiquetas.map(e => e.id === editando ? novaEtiqueta : e));
+      updateEtiqueta();
       setEditando(null);
-      toast({
-        title: "Sucesso",
-        description: "Etiqueta de posição atualizada com sucesso!",
-      });
     } else {
-      setEtiquetas([...etiquetas, novaEtiqueta]);
-      toast({
-        title: "Sucesso",
-        description: "Etiqueta de posição cadastrada com sucesso!",
-      });
+      createEtiqueta();
     }
-
-    setFormData({
-      codigo: "",
-      descricao: "",
-      cd: "",
-      bloco: "",
-      rua: "",
-      modulo: "",
-      nivel: "",
-      posicao: "",
-      capacidade: "",
-      tipoArmazenagem: "",
-      status: "Ativo"
-    });
   };
 
-  const handleEdit = (etiqueta: EtiquetaPosicao) => {
+  const handleEdit = (etiqueta: any) => {
+    console.log(etiqueta);
+    getRuas();
     setFormData({
       codigo: etiqueta.codigo,
       descricao: etiqueta.descricao,
-      cd: etiqueta.cd,
+      cd: getNomeCd(etiqueta.cd),
       bloco: etiqueta.bloco,
       rua: etiqueta.rua,
       modulo: etiqueta.modulo,
       nivel: etiqueta.nivel,
       posicao: etiqueta.posicao,
-      capacidade: etiqueta.capacidade.toString(),
-      tipoArmazenagem: etiqueta.tipoArmazenagem,
-      status: etiqueta.status
+      capacidade: etiqueta.capacidade ? etiqueta.capacidade.toString() : "",
+      tipoArmazenagem: getNomeTipoArmazenagem(etiqueta.tipoArmazenagem),
+      status: etiqueta.status,
     });
     setEditando(etiqueta.id);
   };
 
-  const handleDelete = (id: string) => {
-    setEtiquetas(etiquetas.filter(e => e.id !== id));
-    toast({
-      title: "Sucesso",
-      description: "Etiqueta de posição removida com sucesso!",
-    });
+  const handleDelete = async (etiqueta: EtiquetaPosicao) => {
+    const apiReponse = await PosicaoEstoqueService.deletePosicao(
+      etiqueta.id,
+      etiqueta.cd
+    );
+
+    if (apiReponse.ok) {
+      toast({
+        title: "Sucesso",
+        description: "Etiqueta de posição removida com sucesso!",
+      });
+      getEtiquetas();
+    } else {
+      toast({
+        title: "Erro",
+        description: "Erro ao remover etiqueta de posição.",
+      });
+    }
   };
+
+  const getEtiquetas = async () => {
+    const apiResponse = await PosicaoEstoqueService.getPosicoes();
+    if (apiResponse.ok) {
+      const mapped = apiResponse.data.map((item: any) => ({
+        id: item.id,
+        codigo: item.codigo_posicao,
+        descricao: item.descricao,
+        cd: item.id_cd,
+        bloco: item.bloco,
+        rua: item.rua_nome || item.codigo_rua || "",
+        modulo: item.modulo,
+        nivel: item.nivel,
+        posicao: item.posicao,
+        capacidade: item.capacidade_paletes,
+        tipoArmazenagem: item.tipo_armazenagem_id,
+        status: item.status,
+        dataRegistro: item.criado_em,
+      }));
+      setEtiquetas(mapped);
+    } else {
+      toast({
+        title: "Erro",
+        description: "Erro ao buscar etiquetas de posição.",
+      });
+    }
+  };
+
+  const createEtiqueta = async () => {
+    const cdSelecionado = cd.find((item) => item.nome === formData.cd);
+    const tipoArmazenagemSelecionado = tipos.find(
+      (item) => item.nome === formData.tipoArmazenagem
+    );
+    const ruaSelecionada = ruas.find((item) => item.nome_rua === formData.rua);
+
+    const etiqueta: CreateEtiquetaPosicao = {
+      id_empresa: "",
+      id_cd: cdSelecionado?.id_cd || "",
+      id_rua: ruaSelecionada?.id || "",
+      descricao: formData.descricao,
+      bloco: formData.bloco,
+      modulo: "0", //Campo obrigatorio
+      nivel: "0", //Campo obrigatorio
+      posicao: formData.posicao,
+      capacidade_paletes: Number(formData.capacidade),
+      tipo_armazenagem_id: tipoArmazenagemSelecionado?.id || "",
+      status: formData.status,
+      ativo: true,
+    };
+
+    const apiResponse = await PosicaoEstoqueService.createPosicao(etiqueta);
+    console.log(apiResponse)
+    if (apiResponse.ok) {
+      toast({
+        title: "Sucesso",
+        description:"Etiqueta de posição cadastrada com sucesso!",
+      });
+      setFormData({
+        codigo: "",
+        descricao: "",
+        cd: "",
+        bloco: "",
+        rua: "",
+        modulo: "",
+        nivel: "",
+        posicao: "",
+        capacidade: "",
+        tipoArmazenagem: "",
+        status: "Ativo",
+      });
+      getEtiquetas();
+    } else {
+      toast({
+        title: "Erro",
+        description:  apiResponse.error.message ||  "Erro ao cadastrar etiqueta de posição.",
+      });
+    }
+  };
+
+  const updateEtiqueta = async () => {
+
+    const etiqueta: EditEtiquetaPosicao = {
+      ativo: formData.status === "Ativo",
+      capacidade_paletes: Number(formData.capacidade),
+      descricao: formData.descricao,
+      nivel: formData.nivel,
+      status: formData.status,
+    };
+
+    const idCd = cd.find((item) => item.nome === formData.cd)?.id_cd || "";
+
+    const apiResponse = await PosicaoEstoqueService.updatePosicao(etiqueta,editando,idCd);
+
+    if (apiResponse.ok) {
+      toast({
+        title: "Sucesso",
+        description: "Etiqueta de posição atualizada com sucesso!",
+      });
+      getEtiquetas();
+      setEditando(null);
+      setFormData({
+        codigo: "",
+        descricao: "",
+        cd: "",
+        bloco: "",
+        rua: "",
+        modulo: "",
+        nivel: "",
+        posicao: "",
+        capacidade: "",
+        tipoArmazenagem: "",
+        status: "Ativo",
+      });
+    } else {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar etiqueta de posição.",
+      });
+    }
+  };
+
+  const getTiposArmazenagem = async () => {
+    const apiResponse = await TipoArmazenagemService.getArmazenagens();
+    if (apiResponse.ok) {
+      setTipos(apiResponse.data);
+    } else {
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os tipos de armazenagem.",
+      });
+    }
+  };
+
+  const getCds = async () => {
+    const apiResponse = await DashboardService.getCdsStatus();
+    if (apiResponse.ok) {
+      const data = apiResponse.data.cds;
+      setCd(data);
+    } else {
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar Centros de Distribuição.",
+      });
+    }
+  };
+
+  const getRuas = async () => {
+    if (formData.cd === "") return;
+    const cdSelecionado = cd.find((item) => item.nome === formData.cd);
+    const apiResponse = await ConfiguracaoRuaService.listarRuas(
+      cdSelecionado.id_cd
+    );
+    if (apiResponse.ok) {
+      const data = apiResponse.data;
+      setRuas(data);
+    } else {
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar Ruas.",
+      });
+    }
+  };
+
+  const getNomeTipoArmazenagem = (id: string) => {
+    const tipo = tipos.find((tipo) => tipo.id === id);
+    return tipo ? tipo.nome : "";
+  };
+
+  const getNomeCd = (id: string) => {
+    const cdItem = cd.find((item) => item.id_cd === id);
+    return cdItem ? cdItem.nome : "";
+  };
+
+  useEffect(() => {
+    getTiposArmazenagem();
+    getCds();
+    getEtiquetas();
+  }, []);
+
+  useEffect(() => {
+    getRuas();
+  }, [formData.cd]);
 
   return (
     <div className="space-y-6">
@@ -165,21 +363,30 @@ const CadastroEtiquetaPosicao = () => {
                 <Input
                   id="codigo"
                   value={formData.codigo}
-                  onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, codigo: e.target.value })
+                  }
                   placeholder="POS-A-001-01-01"
                   required
                 />
               </div>
               <div>
                 <Label htmlFor="cd">Centro de Distribuição *</Label>
-                <Select value={formData.cd} onValueChange={(value) => setFormData({ ...formData, cd: value })}>
+                <Select
+                  value={formData.cd}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, cd: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o CD" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="CD São Paulo">CD São Paulo</SelectItem>
-                    <SelectItem value="CD Rio de Janeiro">CD Rio de Janeiro</SelectItem>
-                    <SelectItem value="CD Belo Horizonte">CD Belo Horizonte</SelectItem>
+                    {cd.map((item: CentroDistribuicaoCard) => (
+                      <SelectItem key={item.id_cd} value={item.nome}>
+                        {item.nome}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -190,7 +397,9 @@ const CadastroEtiquetaPosicao = () => {
               <Textarea
                 id="descricao"
                 value={formData.descricao}
-                onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, descricao: e.target.value })
+                }
                 placeholder="Descrição da posição..."
               />
             </div>
@@ -201,20 +410,33 @@ const CadastroEtiquetaPosicao = () => {
                 <Input
                   id="bloco"
                   value={formData.bloco}
-                  onChange={(e) => setFormData({ ...formData, bloco: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, bloco: e.target.value })
+                  }
                   placeholder="A"
                   required
                 />
               </div>
               <div>
                 <Label htmlFor="rua">Rua *</Label>
-                <Input
-                  id="rua"
+                <Select
                   value={formData.rua}
-                  onChange={(e) => setFormData({ ...formData, rua: e.target.value })}
-                  placeholder="001"
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, rua: value })
+                  }
                   required
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a rua" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ruas.map((rua) => (
+                      <SelectItem key={rua.id} value={rua.nome_rua}>
+                        {rua.nome_rua}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               {/* <div>
                 <Label htmlFor="modulo">Módulo</Label>
@@ -239,7 +461,9 @@ const CadastroEtiquetaPosicao = () => {
                 <Input
                   id="posicao"
                   value={formData.posicao}
-                  onChange={(e) => setFormData({ ...formData, posicao: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, posicao: e.target.value })
+                  }
                   placeholder="01"
                 />
               </div>
@@ -252,28 +476,40 @@ const CadastroEtiquetaPosicao = () => {
                   id="capacidade"
                   type="number"
                   value={formData.capacidade}
-                  onChange={(e) => setFormData({ ...formData, capacidade: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, capacidade: e.target.value })
+                  }
                   placeholder="2"
                 />
               </div>
               <div>
                 <Label htmlFor="tipoArmazenagem">Tipo de Armazenagem</Label>
-                <Select value={formData.tipoArmazenagem} onValueChange={(value) => setFormData({ ...formData, tipoArmazenagem: value })}>
+                <Select
+                  value={formData.tipoArmazenagem}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, tipoArmazenagem: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Porta Paletes">Porta Paletes</SelectItem>
-                    <SelectItem value="Drive-in">Drive-in</SelectItem>
-                    <SelectItem value="Push Back">Push Back</SelectItem>
-                    <SelectItem value="Cantilever">Cantilever</SelectItem>
-                    <SelectItem value="Piso">Piso</SelectItem>
+                    {tipos.map((tipo) => (
+                      <SelectItem key={tipo.id} value={tipo.nome}>
+                        {tipo.nome}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label htmlFor="status">Status</Label>
-                <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, status: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -317,21 +553,31 @@ const CadastroEtiquetaPosicao = () => {
             <TableBody>
               {etiquetas.map((etiqueta) => (
                 <TableRow key={etiqueta.id}>
-                  <TableCell className="font-medium">{etiqueta.codigo}</TableCell>
-                  <TableCell>{etiqueta.cd}</TableCell>
+                  <TableCell className="font-medium">
+                    {etiqueta.codigo}
+                  </TableCell>
+                  <TableCell>{getNomeCd(etiqueta.cd)}</TableCell>
                   <TableCell>
                     {etiqueta.bloco}-{etiqueta.rua}
                     {etiqueta.modulo && `-${etiqueta.modulo}`}
                     {etiqueta.nivel && `-${etiqueta.nivel}`}
                     {etiqueta.posicao && `-${etiqueta.posicao}`}
                   </TableCell>
-                  <TableCell>{etiqueta.capacidade} paletes</TableCell>
-                  <TableCell>{etiqueta.tipoArmazenagem}</TableCell>
+                    <TableCell>
+                    {etiqueta.capacidade > 0 &&
+                      `${etiqueta.capacidade} palete${etiqueta.capacidade === 1 ? "" : "s"}`}
+                    </TableCell>
                   <TableCell>
-                    <Badge 
+                    {getNomeTipoArmazenagem(etiqueta.tipoArmazenagem)}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
                       variant={
-                        etiqueta.status === "Ativo" ? "default" : 
-                        etiqueta.status === "Manutenção" ? "secondary" : "outline"
+                        etiqueta.status === "Ativo"
+                          ? "default"
+                          : etiqueta.status === "Manutenção"
+                          ? "secondary"
+                          : "outline"
                       }
                     >
                       {etiqueta.status}
@@ -349,7 +595,7 @@ const CadastroEtiquetaPosicao = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDelete(etiqueta.id)}
+                        onClick={() => handleDelete(etiqueta)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
