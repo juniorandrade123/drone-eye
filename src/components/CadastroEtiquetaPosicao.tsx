@@ -144,7 +144,7 @@ const CadastroEtiquetaPosicao = () => {
         ...prev,
         rua: etiqueta.rua,
       }));
-    }, 300);
+    }, 1000);
   };
 
   const handleDelete = async (etiqueta: EtiquetaPosicao) => {
