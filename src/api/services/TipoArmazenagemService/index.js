@@ -20,9 +20,20 @@ export async function getArmazenagemById(id_armazenagem) {
     return response;
 }
 
-
 export async function createArmazenagem(payload) {
     const empresaId = buscaEmpresaId();
     const response = await Api.post(`${authEndpoint}/${empresaId}/tipos-armazenagem`, payload);
+    return response;
+}
+
+export async function updateArmazenagem(payload) {
+    const empresaId = buscaEmpresaId();
+    const response = await Api.put(`${authEndpoint}/${empresaId}/tipos-armazenagem/${payload.id}`, payload);
+    return response;
+}
+
+export async function deleteArmazenagem(id) {
+    const empresaId = buscaEmpresaId();
+    const response = await Api.remove(`${authEndpoint}/${empresaId}/tipos-armazenagem/${id}`);
     return response;
 }
