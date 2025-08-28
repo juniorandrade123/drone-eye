@@ -46,7 +46,7 @@ export async function updatePosicao(payload, id_posicao, id_cd) {
     if (empresaId) params.append('id_empresa', empresaId);
     if (id_cd) params.append('id_cd', id_cd);
 
-    const response = await Api.patch(`${authEndpoint}/${id_posicao}?${params.toString()}`, payload);
+    const response = await Api.put(`${authEndpoint}/${id_posicao}?${params.toString()}`, payload);
     return response;
 }
 

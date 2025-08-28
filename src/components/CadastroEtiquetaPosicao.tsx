@@ -69,14 +69,22 @@ export type CreateEtiquetaPosicao = {
   posicao: string;
   status: string;
   tipo_armazenagem_id: string;
+  codigo_posicao: string;
+  
 };
 
 export type EditEtiquetaPosicao = {
-  ativo: boolean;
-  capacidade_paletes: number;
+  id_rua: string;
   descricao: string;
+  bloco: string;
+  modulo: string;
   nivel: string;
+  posicao: string;
+  capacidade_paletes: number;
+  tipo_armazenagem_id: string;
   status: string;
+  ativo: boolean;
+  codigo_posicao: string;
 };
 
 const CadastroEtiquetaPosicao = () => {
@@ -105,10 +113,10 @@ const CadastroEtiquetaPosicao = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.codigo || !formData.cd || !formData.bloco || !formData.rua) {
+    if (!formData.codigo || !formData.cd || !formData.bloco || !formData.rua || !formData.tipoArmazenagem || !formData.posicao) {
       toast({
         title: "Erro",
-        description: "Código, CD, bloco e rua são obrigatórios",
+        description: "Código, CD, bloco, rua, tipo de armazenagem e posição são obrigatórios",
         variant: "destructive",
       });
       return;
@@ -154,11 +162,11 @@ const CadastroEtiquetaPosicao = () => {
     );
 
     if (apiReponse.ok) {
+      getEtiquetas();
       toast({
         title: "Sucesso",
         description: "Etiqueta de posição removida com sucesso!",
       });
-      getEtiquetas();
     } else {
       toast({
         title: "Erro",
@@ -209,11 +217,12 @@ const CadastroEtiquetaPosicao = () => {
       bloco: formData.bloco,
       modulo: "0", //Campo obrigatorio
       nivel: "0", //Campo obrigatorio
-      posicao: formData.posicao,
-      capacidade_paletes: Number(formData.capacidade),
+      posicao: formData.posicao ,
+      capacidade_paletes: formData.capacidade ?  Number(formData.capacidade) : 0 ,
       tipo_armazenagem_id: tipoArmazenagemSelecionado?.id || "",
       status: formData.status,
       ativo: true,
+      codigo_posicao: formData.codigo,
     };
 
     const apiResponse = await PosicaoEstoqueService.createPosicao(etiqueta);
@@ -246,12 +255,23 @@ const CadastroEtiquetaPosicao = () => {
   };
 
   const updateEtiqueta = async () => {
+    const ruaSelecionada = ruas.find((item) => item.nome_rua === formData.rua);
+    const tipoArmazenagemSelecionado = tipos.find(
+      (item) => item.nome === formData.tipoArmazenagem
+    );
+
     const etiqueta: EditEtiquetaPosicao = {
-      ativo: formData.status === "Ativo",
-      capacidade_paletes: Number(formData.capacidade),
+      id_rua: ruaSelecionada?.id || "",
       descricao: formData.descricao,
-      nivel: formData.nivel,
+      bloco: formData.bloco,
+      modulo: formData.modulo || "0",
+      nivel: formData.nivel || "0",
+      posicao: formData.posicao,
+      capacidade_paletes: Number(formData.capacidade),
+      tipo_armazenagem_id: tipoArmazenagemSelecionado?.id || "",
       status: formData.status,
+      ativo: formData.status === "Ativo",
+      codigo_posicao: formData.codigo,
     };
 
     const idCd = cd.find((item) => item.nome === formData.cd)?.id_cd || "";
@@ -466,8 +486,9 @@ const CadastroEtiquetaPosicao = () => {
                 />
               </div> */}
               <div>
-                <Label htmlFor="posicao">Posição</Label>
+                <Label htmlFor="posicao">Posição *</Label>
                 <Input
+                  required
                   id="posicao"
                   value={formData.posicao}
                   onChange={(e) =>
@@ -492,8 +513,9 @@ const CadastroEtiquetaPosicao = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="tipoArmazenagem">Tipo de Armazenagem</Label>
+                <Label htmlFor="tipoArmazenagem">Tipo de Armazenagem *</Label>
                 <Select
+                  required
                   value={formData.tipoArmazenagem}
                   onValueChange={(value) =>
                     setFormData({ ...formData, tipoArmazenagem: value })
