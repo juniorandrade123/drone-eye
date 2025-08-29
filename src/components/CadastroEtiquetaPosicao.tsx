@@ -36,7 +36,6 @@ import { ConfiguracaoRuaService } from "@/api/services";
 import { TipoArmazenagem } from "@/types/tipo-armazenagem-model";
 import { useEffect } from "react";
 import { CentroDistribuicaoCard } from "@/types/dashboard-models";
-import { PosicaoEstoque } from "@/types/posicao-estoque-model";
 import { RuaDTO } from "@/types/rua-model";
 
 interface EtiquetaPosicao {
@@ -153,6 +152,8 @@ const CadastroEtiquetaPosicao = () => {
         rua: etiqueta.rua,
       }));
     }, 1000);
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDelete = async (etiqueta: EtiquetaPosicao) => {
