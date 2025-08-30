@@ -48,7 +48,7 @@ export function AppSidebar({ activeTab, setActiveTab, activeCadastroTab, setActi
     { id: "dashboard", title: "Dashboard", icon: Home },
     { id: "cadastros", title: "Cadastros", icon: Settings },
     // { id: "consulta", title: "Consulta Inventário", icon: Search },
-    // { id: "visualizacao", title: "Visualização Grid", icon: Grid3X3 },
+    { id: "visualizacao", title: "Visualização Grid", icon: Grid3X3 },
     { id: "exportacao", title: "Exportação", icon: Download },
   ];
 
