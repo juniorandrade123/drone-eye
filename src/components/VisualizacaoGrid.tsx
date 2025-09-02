@@ -73,221 +73,17 @@ const VisualizacaoGrid = () => {
   } | null>(null);
   const [paleteParaEdicao, setPaleteParaEdicao] = useState<any>(null);
   const [codigoManualModal, setCodigoManualModal] = useState("");
+  const [linkFoto, setLinkFoto] = useState("");
   const { toast } = useToast();
-  const [cds, setCds] = useState<CentroDistribuicaoCard[]>([]);
-  const [ruas, setRuas] = useState<RuaDTO[]>([]);
+
   const [dataInicio, setDataInicio] = useState<Date | undefined>(
-    new Date(2025, 0, 1)
+    new Date(2025, 3, 1)
   );
   const [dataFim, setDataFim] = useState<Date | undefined>(
     new Date(2025, 11, 30)
   );
 
-  // Dados simulados das posições do inventário com paletes individuais
-  const [dadosInventario, setDadosInventario] = useState<DadosInventario>({
-    "CD São Paulo": {
-      "A-10": {
-        totalPosicoes: 8,
-        paletePorPosicao: 6,
-        tempoInicioInventario: "2024-01-15T08:00:00",
-        tempoEstimadoTotal: 4.5, // horas
-        ruasConcluidas: 2, // número de ruas já concluídas
-        posicoes: [
-          {
-            id: "P-01",
-            paletes: [
-              {
-                id: "PAL-001",
-                status: "lido",
-                sku: "SKU001",
-                foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
-              },
-              {
-                id: "PAL-002",
-                status: "lido",
-                sku: "SKU002",
-                foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
-              },
-              {
-                id: "PAL-003",
-                status: "nao-lido",
-                sku: null,
-                foto: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400",
-              },
-              { id: "PAL-004", status: "vazio", sku: null, foto: null },
-              {
-                id: "PAL-005",
-                status: "lido",
-                sku: "SKU003",
-                foto: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400",
-              },
-              {
-                id: "PAL-006",
-                status: "nao-lido",
-                sku: null,
-                foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
-              },
-            ],
-          },
-          {
-            id: "P-02",
-            paletes: [
-              {
-                id: "PAL-007",
-                status: "nao-lido",
-                sku: null,
-                foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
-              },
-              {
-                id: "PAL-008",
-                status: "lido",
-                sku: "SKU004",
-                foto: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400",
-              },
-              { id: "PAL-009", status: "vazio", sku: null, foto: null },
-              { id: "PAL-010", status: "vazio", sku: null, foto: null },
-              {
-                id: "PAL-011",
-                status: "lido",
-                sku: "SKU005",
-                foto: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400",
-              },
-              {
-                id: "PAL-012",
-                status: "nao-lido",
-                sku: null,
-                foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
-              },
-            ],
-          },
-          {
-            id: "P-03",
-            paletes: [
-              { id: "PAL-013", status: "vazio", sku: null, foto: null },
-              { id: "PAL-014", status: "vazio", sku: null, foto: null },
-              { id: "PAL-015", status: "vazio", sku: null, foto: null },
-              { id: "PAL-016", status: "vazio", sku: null, foto: null },
-              { id: "PAL-017", status: "vazio", sku: null, foto: null },
-              { id: "PAL-018", status: "vazio", sku: null, foto: null },
-            ],
-          },
-        ],
-      },
-      "A-11": {
-        totalPosicoes: 6,
-        paletePorPosicao: 4, // 4 paletes por posição
-        ruasConcluidas: 1,
-        posicoes: [
-          {
-            id: "P-01",
-            paletes: [
-              {
-                id: "PAL-019",
-                status: "lido",
-                sku: "SKU006",
-                foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
-              },
-              {
-                id: "PAL-020",
-                status: "lido",
-                sku: "SKU007",
-                foto: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400",
-              },
-              {
-                id: "PAL-021",
-                status: "nao-lido",
-                sku: null,
-                foto: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400",
-              },
-              { id: "PAL-022", status: "vazio", sku: null, foto: null },
-            ],
-          },
-          {
-            id: "P-02",
-            paletes: [
-              {
-                id: "PAL-023",
-                status: "lido",
-                sku: "SKU008",
-                foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
-              },
-              {
-                id: "PAL-024",
-                status: "nao-lido",
-                sku: null,
-                foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
-              },
-              { id: "PAL-025", status: "vazio", sku: null, foto: null },
-              {
-                id: "PAL-026",
-                status: "lido",
-                sku: "SKU009",
-                foto: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400",
-              },
-            ],
-          },
-        ],
-      },
-    },
-    "CD Rio de Janeiro": {
-      "B-05": {
-        totalPosicoes: 4,
-        paletePorPosicao: 9, // 9 paletes por posição
-        ruasConcluidas: 0,
-        posicoes: [
-          {
-            id: "P-01",
-            paletes: [
-              {
-                id: "PAL-027",
-                status: "lido",
-                sku: "SKU010",
-                foto: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400",
-              },
-              {
-                id: "PAL-028",
-                status: "lido",
-                sku: "SKU011",
-                foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
-              },
-              {
-                id: "PAL-029",
-                status: "nao-lido",
-                sku: null,
-                foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
-              },
-              { id: "PAL-030", status: "vazio", sku: null, foto: null },
-              {
-                id: "PAL-031",
-                status: "lido",
-                sku: "SKU012",
-                foto: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400",
-              },
-              {
-                id: "PAL-032",
-                status: "nao-lido",
-                sku: null,
-                foto: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400",
-              },
-              { id: "PAL-033", status: "vazio", sku: null, foto: null },
-              {
-                id: "PAL-034",
-                status: "lido",
-                sku: "SKU013",
-                foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
-              },
-              {
-                id: "PAL-035",
-                status: "nao-lido",
-                sku: null,
-                foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
-              },
-            ],
-          },
-        ],
-      },
-    },
-  });
+  const [dadosInventario, setDadosInventario] = useState<DadosInventario>({});
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -372,6 +168,7 @@ const VisualizacaoGrid = () => {
   const handlePaleteClick = (palete: any, event?: React.MouseEvent) => {
     if (palete.status === "vazio") return;
 
+    gerarLink(palete.foto);
     // Se foi clique com Ctrl/Cmd, abrir modal de edição
     if (event?.ctrlKey || event?.metaKey) {
       setPaleteParaEdicao(palete);
@@ -384,6 +181,7 @@ const VisualizacaoGrid = () => {
       status: palete.status,
       palete: palete.id,
     });
+
     setCodigoManualModal("");
     setModalAberto(true);
   };
@@ -510,115 +308,61 @@ const VisualizacaoGrid = () => {
   };
 
   const popularDadosInventario = (relatorios: RelatorioFinal[]) => {
-    // Extrai todos os códigos de posição únicos dos relatórios
-    const posicoes = Array.from(
-      new Set(relatorios.map((rel) => rel.codigo_posicao))
-    );
-    console.log(posicoes);
+    const posicoesMap: {
+      [
+        posicao: string
+      ]: import("@/types/relatorio-final-model").PosicaoInventario;
+    } = {};
+    relatorios.forEach((rel) => {
+      if (!posicoesMap[rel.codigo_posicao]) {
+        posicoesMap[rel.codigo_posicao] = {
+          id: rel.codigo_posicao,
+          paletes: [],
+        };
+      }
+
+      posicoesMap[rel.codigo_posicao].paletes.push({
+        id: rel.codigo_palete,
+        status: "lido",
+        sku: null, // Não vem do backend
+        foto:
+          rel.imagem_palete && rel.imagem_palete.toUpperCase() !== "VAZIO"
+            ? rel.imagem_palete
+            : null,
+      });
+    });
+
+    const posicoes = Object.values(posicoesMap);
     setDadosInventario({
       [cdSelecionado]: {
         [ruaSelecionada]: {
-          totalPosicoes: 8,
-          paletePorPosicao: 6,
-          tempoInicioInventario: "2024-01-15T08:00:00",
-          tempoEstimadoTotal: 4.5, // horas
-          ruasConcluidas: 2, // número de ruas já concluídas
-          posicoes: [
-            {
-              id: "P-01",
-              paletes: [
-                {
-                  id: "PAL-001",
-                  status: "lido",
-                  sku: "SKU001",
-                  foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
-                },
-                {
-                  id: "PAL-002",
-                  status: "lido",
-                  sku: "SKU002",
-                  foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
-                },
-                {
-                  id: "PAL-003",
-                  status: "nao-lido",
-                  sku: null,
-                  foto: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400",
-                },
-                { id: "PAL-004", status: "vazio", sku: null, foto: null },
-                {
-                  id: "PAL-005",
-                  status: "lido",
-                  sku: "SKU003",
-                  foto: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400",
-                },
-                {
-                  id: "PAL-006",
-                  status: "nao-lido",
-                  sku: null,
-                  foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
-                },
-              ],
-            },
-            {
-              id: "P-02",
-              paletes: [
-                {
-                  id: "PAL-007",
-                  status: "nao-lido",
-                  sku: null,
-                  foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
-                },
-                {
-                  id: "PAL-008",
-                  status: "lido",
-                  sku: "SKU004",
-                  foto: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400",
-                },
-                { id: "PAL-009", status: "vazio", sku: null, foto: null },
-                { id: "PAL-010", status: "vazio", sku: null, foto: null },
-                {
-                  id: "PAL-011",
-                  status: "lido",
-                  sku: "SKU005",
-                  foto: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400",
-                },
-                {
-                  id: "PAL-012",
-                  status: "nao-lido",
-                  sku: null,
-                  foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
-                },
-              ],
-            },
-            {
-              id: "P-03",
-              paletes: [
-                { id: "PAL-013", status: "vazio", sku: null, foto: null },
-                { id: "PAL-014", status: "vazio", sku: null, foto: null },
-                { id: "PAL-015", status: "vazio", sku: null, foto: null },
-                { id: "PAL-016", status: "vazio", sku: null, foto: null },
-                { id: "PAL-017", status: "vazio", sku: null, foto: null },
-                { id: "PAL-018", status: "vazio", sku: null, foto: null },
-              ],
-            },
-          ],
+          totalPosicoes: posicoes.length,
+          paletePorPosicao: posicoes[0]?.paletes.length || 0,
+          tempoInicioInventario: "",
+          tempoEstimadoTotal: 0,
+          ruasConcluidas: 0,
+          posicoes,
         },
       },
     });
   };
 
   const gerarLink = async (nomeImagem: string) => {
+    if (!nomeImagem) {
+      setLinkFoto("");
+    }
     const payload = {
       id_cd: cdSelecionado,
       codigo_rua: ruaSelecionada,
       imagens: [{ nome_imagem: nomeImagem, expiracao: 600 }],
     };
 
-    const apiReponse = await R2StorageService.gerarLinkImagem(payload);
+    const apiResponse = await R2StorageService.gerarLinkImagem(payload);
 
-    if(apiReponse.ok){
-      window.open(apiReponse.data.imagens[0].url, "_blank");
+    if (apiResponse.ok) {
+      setLinkFoto(apiResponse.data.imagens[0].url);
+    } else {
+      setLinkFoto("");
     }
   };
 
@@ -954,12 +698,18 @@ const VisualizacaoGrid = () => {
                     : "Falha na Leitura do Código"}
                 </Badge>
               </div>
-              <div className="border rounded-lg overflow-hidden">
-                <img
-                  src={imagemSelecionada.url}
-                  alt={`Foto do código de barras - ${imagemSelecionada.palete}`}
-                  className="w-full h-auto max-h-96 object-contain bg-gray-50"
-                />
+              <div className=" rounded-lg overflow-hidden">
+                {linkFoto && (
+                  <a
+                    href={linkFoto}
+                    className="text-blue-600 hover:underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Ver foto do código de barras
+                  </a>
+                )}
+                {!linkFoto && <span>Código de barras não foi identificado</span>}
               </div>
               <p className="text-sm text-gray-600">
                 {imagemSelecionada.status === "lido"
