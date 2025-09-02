@@ -1,28 +1,89 @@
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MapPin, Package, CheckCircle, AlertCircle, Circle, Camera, X, Edit, Clock, Timer, Save } from "lucide-react";
+import {
+  MapPin,
+  Package,
+  CheckCircle,
+  AlertCircle,
+  Circle,
+  Camera,
+  X,
+  Edit,
+  Clock,
+  Timer,
+  Save,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import EdicaoManualModal from "./EdicaoManualModal";
+import { DashboardService } from "@/api/services";
+import { RelatorioFinalService } from "@/api/services";
+import { ConfiguracaoRuaService } from "@/api/services";
+import { ptBR } from "date-fns/locale";
+import { CentroDistribuicaoCard } from "@/types/dashboard-models";
+import { RuaDTO } from "@/types/rua-model";
+import { DadosInventario } from "@/types/relatorio-final-model";
 
 const VisualizacaoGrid = () => {
   const [cdSelecionado, setCdSelecionado] = useState("");
+  const [cdsDisponiveis, setCdsDisponiveis] = useState<
+    CentroDistribuicaoCard[]
+  >([]);
+  const [ruasDisponiveis, setRuasDisponiveis] = useState<RuaDTO[]>([]);
   const [ruaSelecionada, setRuaSelecionada] = useState("");
-  const [posicaoSelecionada, setPosicaoSelecionada] = useState<string | null>(null);
+  const [posicaoSelecionada, setPosicaoSelecionada] = useState<string | null>(
+    null
+  );
   const [modalAberto, setModalAberto] = useState(false);
   const [modalEdicaoAberto, setModalEdicaoAberto] = useState(false);
-  const [imagemSelecionada, setImagemSelecionada] = useState<{url: string, status: string, palete: string} | null>(null);
+  const [imagemSelecionada, setImagemSelecionada] = useState<{
+    url: string;
+    status: string;
+    palete: string;
+  } | null>(null);
   const [paleteParaEdicao, setPaleteParaEdicao] = useState<any>(null);
   const [codigoManualModal, setCodigoManualModal] = useState("");
   const { toast } = useToast();
+  const [cds, setCds] = useState<CentroDistribuicaoCard[]>([]);
+  const [ruas, setRuas] = useState<RuaDTO[]>([]);
+  const [dataInicio, setDataInicio] = useState<Date | undefined>(
+    new Date(2025, 0, 1)
+  );
+  const [dataFim, setDataFim] = useState<Date | undefined>(
+    new Date(2025, 11, 30)
+  );
 
   // Dados simulados das posições do inventário com paletes individuais
-  const [dadosInventario, setDadosInventario] = useState({
+  const [dadosInventario, setDadosInventario] = useState<DadosInventario>({
     "CD São Paulo": {
       "A-10": {
         totalPosicoes: 8,
@@ -31,66 +92,141 @@ const VisualizacaoGrid = () => {
         tempoEstimadoTotal: 4.5, // horas
         ruasConcluidas: 2, // número de ruas já concluídas
         posicoes: [
-          { 
-            id: "P-01", 
+          {
+            id: "P-01",
             paletes: [
-              { id: "PAL-001", status: "lido", sku: "SKU001", foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400" },
-              { id: "PAL-002", status: "lido", sku: "SKU002", foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400" },
-              { id: "PAL-003", status: "nao-lido", sku: null, foto: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400" },
+              {
+                id: "PAL-001",
+                status: "lido",
+                sku: "SKU001",
+                foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
+              },
+              {
+                id: "PAL-002",
+                status: "lido",
+                sku: "SKU002",
+                foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
+              },
+              {
+                id: "PAL-003",
+                status: "nao-lido",
+                sku: null,
+                foto: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400",
+              },
               { id: "PAL-004", status: "vazio", sku: null, foto: null },
-              { id: "PAL-005", status: "lido", sku: "SKU003", foto: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400" },
-              { id: "PAL-006", status: "nao-lido", sku: null, foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400" }
-            ]
+              {
+                id: "PAL-005",
+                status: "lido",
+                sku: "SKU003",
+                foto: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400",
+              },
+              {
+                id: "PAL-006",
+                status: "nao-lido",
+                sku: null,
+                foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
+              },
+            ],
           },
-          { 
-            id: "P-02", 
+          {
+            id: "P-02",
             paletes: [
-              { id: "PAL-007", status: "nao-lido", sku: null, foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400" },
-              { id: "PAL-008", status: "lido", sku: "SKU004", foto: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400" },
+              {
+                id: "PAL-007",
+                status: "nao-lido",
+                sku: null,
+                foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
+              },
+              {
+                id: "PAL-008",
+                status: "lido",
+                sku: "SKU004",
+                foto: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400",
+              },
               { id: "PAL-009", status: "vazio", sku: null, foto: null },
               { id: "PAL-010", status: "vazio", sku: null, foto: null },
-              { id: "PAL-011", status: "lido", sku: "SKU005", foto: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400" },
-              { id: "PAL-012", status: "nao-lido", sku: null, foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400" }
-            ]
+              {
+                id: "PAL-011",
+                status: "lido",
+                sku: "SKU005",
+                foto: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400",
+              },
+              {
+                id: "PAL-012",
+                status: "nao-lido",
+                sku: null,
+                foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
+              },
+            ],
           },
-          { 
-            id: "P-03", 
+          {
+            id: "P-03",
             paletes: [
               { id: "PAL-013", status: "vazio", sku: null, foto: null },
               { id: "PAL-014", status: "vazio", sku: null, foto: null },
               { id: "PAL-015", status: "vazio", sku: null, foto: null },
               { id: "PAL-016", status: "vazio", sku: null, foto: null },
               { id: "PAL-017", status: "vazio", sku: null, foto: null },
-              { id: "PAL-018", status: "vazio", sku: null, foto: null }
-            ]
-          }
-        ]
+              { id: "PAL-018", status: "vazio", sku: null, foto: null },
+            ],
+          },
+        ],
       },
       "A-11": {
         totalPosicoes: 6,
         paletePorPosicao: 4, // 4 paletes por posição
         ruasConcluidas: 1,
         posicoes: [
-          { 
-            id: "P-01", 
+          {
+            id: "P-01",
             paletes: [
-              { id: "PAL-019", status: "lido", sku: "SKU006", foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400" },
-              { id: "PAL-020", status: "lido", sku: "SKU007", foto: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400" },
-              { id: "PAL-021", status: "nao-lido", sku: null, foto: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400" },
-              { id: "PAL-022", status: "vazio", sku: null, foto: null }
-            ]
+              {
+                id: "PAL-019",
+                status: "lido",
+                sku: "SKU006",
+                foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
+              },
+              {
+                id: "PAL-020",
+                status: "lido",
+                sku: "SKU007",
+                foto: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400",
+              },
+              {
+                id: "PAL-021",
+                status: "nao-lido",
+                sku: null,
+                foto: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400",
+              },
+              { id: "PAL-022", status: "vazio", sku: null, foto: null },
+            ],
           },
-          { 
-            id: "P-02", 
+          {
+            id: "P-02",
             paletes: [
-              { id: "PAL-023", status: "lido", sku: "SKU008", foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400" },
-              { id: "PAL-024", status: "nao-lido", sku: null, foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400" },
+              {
+                id: "PAL-023",
+                status: "lido",
+                sku: "SKU008",
+                foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
+              },
+              {
+                id: "PAL-024",
+                status: "nao-lido",
+                sku: null,
+                foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
+              },
               { id: "PAL-025", status: "vazio", sku: null, foto: null },
-              { id: "PAL-026", status: "lido", sku: "SKU009", foto: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400" }
-            ]
-          }
-        ]
-      }
+              {
+                id: "PAL-026",
+                status: "lido",
+                sku: "SKU009",
+                foto: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400",
+              },
+            ],
+          },
+        ],
+      },
     },
     "CD Rio de Janeiro": {
       "B-05": {
@@ -98,128 +234,184 @@ const VisualizacaoGrid = () => {
         paletePorPosicao: 9, // 9 paletes por posição
         ruasConcluidas: 0,
         posicoes: [
-          { 
-            id: "P-01", 
+          {
+            id: "P-01",
             paletes: [
-              { id: "PAL-027", status: "lido", sku: "SKU010", foto: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400" },
-              { id: "PAL-028", status: "lido", sku: "SKU011", foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400" },
-              { id: "PAL-029", status: "nao-lido", sku: null, foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400" },
+              {
+                id: "PAL-027",
+                status: "lido",
+                sku: "SKU010",
+                foto: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400",
+              },
+              {
+                id: "PAL-028",
+                status: "lido",
+                sku: "SKU011",
+                foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
+              },
+              {
+                id: "PAL-029",
+                status: "nao-lido",
+                sku: null,
+                foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
+              },
               { id: "PAL-030", status: "vazio", sku: null, foto: null },
-              { id: "PAL-031", status: "lido", sku: "SKU012", foto: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400" },
-              { id: "PAL-032", status: "nao-lido", sku: null, foto: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400" },
+              {
+                id: "PAL-031",
+                status: "lido",
+                sku: "SKU012",
+                foto: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400",
+              },
+              {
+                id: "PAL-032",
+                status: "nao-lido",
+                sku: null,
+                foto: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400",
+              },
               { id: "PAL-033", status: "vazio", sku: null, foto: null },
-              { id: "PAL-034", status: "lido", sku: "SKU013", foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400" },
-              { id: "PAL-035", status: "nao-lido", sku: null, foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400" }
-            ]
-          }
-        ]
-      }
-    }
+              {
+                id: "PAL-034",
+                status: "lido",
+                sku: "SKU013",
+                foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
+              },
+              {
+                id: "PAL-035",
+                status: "nao-lido",
+                sku: null,
+                foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
+              },
+            ],
+          },
+        ],
+      },
+    },
   });
-
-  const cdsDisponiveis = Object.keys(dadosInventario);
-  const ruasDisponiveis = cdSelecionado ? Object.keys(dadosInventario[cdSelecionado] || {}) : [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "lido": return "bg-green-100 border-green-400 text-green-800 hover:bg-green-200";
-      case "nao-lido": return "bg-yellow-100 border-yellow-400 text-yellow-800 hover:bg-yellow-200";
-      case "vazio": return "bg-gray-100 border-gray-300 text-gray-600 cursor-not-allowed";
-      default: return "bg-gray-100 border-gray-300 text-gray-600";
+      case "lido":
+        return "bg-green-100 border-green-400 text-green-800 hover:bg-green-200";
+      case "nao-lido":
+        return "bg-yellow-100 border-yellow-400 text-yellow-800 hover:bg-yellow-200";
+      case "vazio":
+        return "bg-gray-100 border-gray-300 text-gray-600 cursor-not-allowed";
+      default:
+        return "bg-gray-100 border-gray-300 text-gray-600";
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "lido": return <CheckCircle className="h-3 w-3" />;
-      case "nao-lido": return <AlertCircle className="h-3 w-3" />;
-      case "vazio": return <Circle className="h-3 w-3" />;
-      default: return <Circle className="h-3 w-3" />;
+      case "lido":
+        return <CheckCircle className="h-3 w-3" />;
+      case "nao-lido":
+        return <AlertCircle className="h-3 w-3" />;
+      case "vazio":
+        return <Circle className="h-3 w-3" />;
+      default:
+        return <Circle className="h-3 w-3" />;
     }
   };
 
-  const dadosRua = cdSelecionado && ruaSelecionada ? dadosInventario[cdSelecionado]?.[ruaSelecionada] : null;
+  const dadosRua =
+    cdSelecionado && ruaSelecionada
+      ? dadosInventario[cdSelecionado]?.[ruaSelecionada]
+      : null;
 
   const calcularEstatisticas = () => {
     if (!dadosRua) return { lidos: 0, naoLidos: 0, vazios: 0, total: 0 };
-    
-    let lidos = 0, naoLidos = 0, vazios = 0, total = 0;
-    
-    dadosRua.posicoes.forEach(posicao => {
-      posicao.paletes.forEach(palete => {
+
+    let lidos = 0,
+      naoLidos = 0,
+      vazios = 0,
+      total = 0;
+
+    dadosRua.posicoes.forEach((posicao) => {
+      posicao.paletes.forEach((palete) => {
         total++;
         switch (palete.status) {
-          case "lido": lidos++; break;
-          case "nao-lido": naoLidos++; break;
-          case "vazio": vazios++; break;
+          case "lido":
+            lidos++;
+            break;
+          case "nao-lido":
+            naoLidos++;
+            break;
+          case "vazio":
+            vazios++;
+            break;
         }
       });
     });
-    
+
     return { lidos, naoLidos, vazios, total };
   };
 
   const calcularKPIsTempo = () => {
     if (!dadosRua) return null;
-    
+
     const stats = calcularEstatisticas();
-    const percentualConcluido = ((stats.lidos + stats.vazios) / stats.total) * 100;
+    const percentualConcluido =
+      ((stats.lidos + stats.vazios) / stats.total) * 100;
     const tempoDecorrido = 2.3; // Simulado - em produção seria calculado com base no tempo real
     const tempoEstimadoRestante = dadosRua.tempoEstimadoTotal - tempoDecorrido;
     const velocidadeMedia = stats.lidos / tempoDecorrido; // paletes por hora
     const ruasPorHora = dadosRua.ruasConcluidas / tempoDecorrido; // ruas por hora
-    
+
     return {
       percentualConcluido: Math.round(percentualConcluido),
       tempoDecorrido,
       tempoEstimadoRestante: Math.max(0, tempoEstimadoRestante),
       tempoEstimadoTotal: dadosRua.tempoEstimadoTotal,
       velocidadeMedia: Math.round(velocidadeMedia),
-      ruasPorHora: ruasPorHora.toFixed(1)
+      ruasPorHora: ruasPorHora.toFixed(1),
     };
   };
 
   const handlePaleteClick = (palete: any, event?: React.MouseEvent) => {
     if (palete.status === "vazio") return;
-    
+
     // Se foi clique com Ctrl/Cmd, abrir modal de edição
     if (event?.ctrlKey || event?.metaKey) {
       setPaleteParaEdicao(palete);
       setModalEdicaoAberto(true);
       return;
     }
-    
+
     setImagemSelecionada({
       url: palete.foto,
       status: palete.status,
-      palete: palete.id
+      palete: palete.id,
     });
     setCodigoManualModal("");
     setModalAberto(true);
   };
 
   const handleSalvarEdicaoManual = (paleteId: string, sku: string) => {
-    setDadosInventario(prev => {
+    setDadosInventario((prev) => {
       const newData = { ...prev };
       const cdData = newData[cdSelecionado];
       const ruaData = cdData[ruaSelecionada];
-      
-      ruaData.posicoes.forEach(posicao => {
-        posicao.paletes.forEach(palete => {
+
+      ruaData.posicoes.forEach((posicao) => {
+        posicao.paletes.forEach((palete) => {
           if (palete.id === paleteId) {
             palete.sku = sku;
             palete.status = "lido";
           }
         });
       });
-      
+
       return newData;
     });
   };
 
   const handleSalvarCodigoModal = () => {
     if (codigoManualModal.trim() && imagemSelecionada) {
-      handleSalvarEdicaoManual(imagemSelecionada.palete, codigoManualModal.trim());
+      handleSalvarEdicaoManual(
+        imagemSelecionada.palete,
+        codigoManualModal.trim()
+      );
       toast({
         title: "Código salvo com sucesso!",
         description: `Palete ${imagemSelecionada.palete} atualizado com código ${codigoManualModal}`,
@@ -237,15 +429,98 @@ const VisualizacaoGrid = () => {
 
   const getGridCols = (paletePorPosicao: number) => {
     switch (paletePorPosicao) {
-      case 4: return "grid-cols-2";
-      case 6: return "grid-cols-3";
-      case 9: return "grid-cols-3";
-      default: return "grid-cols-2";
+      case 4:
+        return "grid-cols-2";
+      case 6:
+        return "grid-cols-3";
+      case 9:
+        return "grid-cols-3";
+      default:
+        return "grid-cols-2";
     }
   };
 
   const stats = calcularEstatisticas();
   const kpis = calcularKPIsTempo();
+
+  const getCds = async () => {
+    const apiResponse = await DashboardService.getCdsStatus();
+    if (apiResponse.ok) {
+      const data = apiResponse.data.cds;
+      setCdsDisponiveis(data);
+    } else {
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar Centros de Distribuição.",
+      });
+    }
+  };
+
+  const getRuas = async () => {
+    if (!cdSelecionado) return;
+    const apiResponse = await ConfiguracaoRuaService.listarRuas(cdSelecionado);
+    if (apiResponse.ok) {
+      const data = apiResponse.data;
+      setRuasDisponiveis(data);
+      if (data.length === 0) {
+        toast({
+          title: "Atenção",
+          description: "Centro de Distribuição não possui ruas ativas",
+        });
+      }
+    } else {
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar Ruas.",
+      });
+    }
+  };
+
+  const formatDate = (date: Date | undefined, endOfDay = false) => {
+    if (!date) return "";
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+      date.getDate()
+    )}T${endOfDay ? "23:59:59" : "00:00:00"}`;
+  };
+
+  const getRelatoriosFinais = async () => {
+    const dataInicioStr = formatDate(dataInicio, false);
+    const dataFimStr = formatDate(dataFim, true);
+
+    const apiResponse = await RelatorioFinalService.getRelatorioFinal(
+      cdSelecionado,
+      dataInicioStr,
+      dataFimStr,
+      ruaSelecionada
+    );
+
+    if (apiResponse.ok) {
+      const data = apiResponse.data;
+      popularDadosInventario(data);
+    } else {
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar Relatórios Finais.",
+      });
+    }
+  };
+
+  const popularDadosInventario = (data: any) => {
+    // setDadosInventario(data);
+  };
+
+  useEffect(() => {
+    getCds();
+  }, []);
+
+  useEffect(() => {
+    getRuas();
+  }, [cdSelecionado]);
+
+  useEffect(() => {
+    getRelatoriosFinais();
+  }, [cdSelecionado, ruaSelecionada, dataInicio, dataFim]);
 
   return (
     <div className="space-y-6">
@@ -256,24 +531,30 @@ const VisualizacaoGrid = () => {
             Visualização em Grid - Inventário por Paletes
           </CardTitle>
           <CardDescription>
-            Visualize todas as posições de paletes de cada rua com status de leitura individual
+            Visualize todas as posições de paletes de cada rua com status de
+            leitura individual
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Centro de Distribuição</label>
-              <Select value={cdSelecionado} onValueChange={(value) => {
-                setCdSelecionado(value);
-                setRuaSelecionada("");
-              }}>
+              <label className="text-sm font-medium">
+                Centro de Distribuição
+              </label>
+              <Select
+                value={cdSelecionado}
+                onValueChange={(value) => {
+                  setCdSelecionado(value);
+                  setRuaSelecionada("");
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o CD" />
                 </SelectTrigger>
                 <SelectContent>
                   {cdsDisponiveis.map((cd) => (
-                    <SelectItem key={cd} value={cd}>
-                      {cd}
+                    <SelectItem key={cd.id_cd} value={cd.id_cd}>
+                      {cd.nome}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -282,18 +563,76 @@ const VisualizacaoGrid = () => {
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Rua</label>
-              <Select value={ruaSelecionada} onValueChange={setRuaSelecionada} disabled={!cdSelecionado}>
+              <Select
+                value={ruaSelecionada}
+                onValueChange={setRuaSelecionada}
+                disabled={!cdSelecionado}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a rua" />
                 </SelectTrigger>
                 <SelectContent>
                   {ruasDisponiveis.map((rua) => (
-                    <SelectItem key={rua} value={rua}>
-                      {rua}
+                    <SelectItem key={rua.id} value={rua.id}>
+                      {rua.nome_rua}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          {/* Filtros de data */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+            <div className="space-y-2">
+              <Label>Data Início</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Input
+                    readOnly
+                    value={
+                      dataInicio
+                        ? dataInicio.toLocaleDateString("pt-BR")
+                        : undefined
+                    }
+                    placeholder="Selecione a data de início"
+                    className="cursor-pointer bg-white"
+                  />
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={dataInicio}
+                    onSelect={setDataInicio}
+                    locale={ptBR}
+                    className="rounded-md border"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
+              <Label>Data Fim</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Input
+                    readOnly
+                    value={
+                      dataFim ? dataFim.toLocaleDateString("pt-BR") : undefined
+                    }
+                    placeholder="Selecione a data de fim"
+                    className="cursor-pointer bg-white"
+                  />
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={dataFim}
+                    onSelect={setDataFim}
+                    locale={ptBR}
+                    className="rounded-md border"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
@@ -313,14 +652,16 @@ const VisualizacaoGrid = () => {
             </div>
             <div className="flex items-center gap-2">
               <Edit className="h-4 w-4 text-blue-600" />
-              <span className="text-sm">Ctrl+Click para editar manualmente</span>
+              <span className="text-sm">
+                Ctrl+Click para editar manualmente
+              </span>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* KPIs de Tempo */}
-      {kpis && (
+      {/* {kpis && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -357,14 +698,16 @@ const VisualizacaoGrid = () => {
             </div>
           </CardContent>
         </Card>
-      )}
+      )} */}
 
       {/* Grid de Posições e Paletes */}
       {dadosRua && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>Rua {ruaSelecionada} - {cdSelecionado}</span>
+              <span>
+                Rua {ruaSelecionada} - {cdSelecionado}
+              </span>
               <Badge variant="outline">
                 {dadosRua.paletePorPosicao} paletes por posição
               </Badge>
@@ -378,16 +721,28 @@ const VisualizacaoGrid = () => {
                     <Package className="h-4 w-4 text-blue-600" />
                     Posição {posicao.id}
                   </h3>
-                  <div className={`grid ${getGridCols(dadosRua.paletePorPosicao)} gap-2`}>
+                  <div
+                    className={`grid ${getGridCols(
+                      dadosRua.paletePorPosicao
+                    )} gap-2`}
+                  >
                     {posicao.paletes.map((palete) => (
                       <div
                         key={palete.id}
-                        className={`p-3 rounded-lg border-2 transition-all cursor-pointer relative ${getStatusColor(palete.status)} ${palete.status === "vazio" ? "cursor-not-allowed" : "hover:shadow-md"}`}
+                        className={`p-3 rounded-lg border-2 transition-all cursor-pointer relative ${getStatusColor(
+                          palete.status
+                        )} ${
+                          palete.status === "vazio"
+                            ? "cursor-not-allowed"
+                            : "hover:shadow-md"
+                        }`}
                         onClick={(e) => handlePaleteClick(palete, e)}
                       >
                         <div className="flex flex-col items-center text-center space-y-1">
                           {getStatusIcon(palete.status)}
-                          <span className="font-semibold text-xs">{palete.id}</span>
+                          <span className="font-semibold text-xs">
+                            {palete.id}
+                          </span>
                           {palete.sku && (
                             <span className="text-xs bg-white px-1 py-0.5 rounded">
                               {palete.sku}
@@ -412,19 +767,27 @@ const VisualizacaoGrid = () => {
             {/* Estatísticas da Rua */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
               <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <div className="text-xl font-bold text-blue-600">{stats.total}</div>
+                <div className="text-xl font-bold text-blue-600">
+                  {stats.total}
+                </div>
                 <div className="text-sm text-gray-600">Total Paletes</div>
               </div>
               <div className="text-center p-3 bg-green-50 rounded-lg">
-                <div className="text-xl font-bold text-green-600">{stats.lidos}</div>
+                <div className="text-xl font-bold text-green-600">
+                  {stats.lidos}
+                </div>
                 <div className="text-sm text-gray-600">Lidos</div>
               </div>
               <div className="text-center p-3 bg-yellow-50 rounded-lg">
-                <div className="text-xl font-bold text-yellow-600">{stats.naoLidos}</div>
+                <div className="text-xl font-bold text-yellow-600">
+                  {stats.naoLidos}
+                </div>
                 <div className="text-sm text-gray-600">Não Lidos</div>
               </div>
               <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <div className="text-xl font-bold text-gray-600">{stats.vazios}</div>
+                <div className="text-xl font-bold text-gray-600">
+                  {stats.vazios}
+                </div>
                 <div className="text-sm text-gray-600">Vazios</div>
               </div>
             </div>
@@ -440,7 +803,8 @@ const VisualizacaoGrid = () => {
               Selecione um CD para começar
             </h3>
             <p className="text-gray-500">
-              Escolha um Centro de Distribuição e uma rua para visualizar o grid de paletes
+              Escolha um Centro de Distribuição e uma rua para visualizar o grid
+              de paletes
             </p>
           </CardContent>
         </Card>
@@ -458,27 +822,36 @@ const VisualizacaoGrid = () => {
           {imagemSelecionada && (
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <Badge 
-                  variant={imagemSelecionada.status === "lido" ? "default" : "secondary"}
-                  className={imagemSelecionada.status === "lido" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}
+                <Badge
+                  variant={
+                    imagemSelecionada.status === "lido"
+                      ? "default"
+                      : "secondary"
+                  }
+                  className={
+                    imagemSelecionada.status === "lido"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-yellow-100 text-yellow-800"
+                  }
                 >
-                  {imagemSelecionada.status === "lido" ? "Código Lido com Sucesso" : "Falha na Leitura do Código"}
+                  {imagemSelecionada.status === "lido"
+                    ? "Código Lido com Sucesso"
+                    : "Falha na Leitura do Código"}
                 </Badge>
               </div>
               <div className="border rounded-lg overflow-hidden">
-                <img 
-                  src={imagemSelecionada.url} 
+                <img
+                  src={imagemSelecionada.url}
                   alt={`Foto do código de barras - ${imagemSelecionada.palete}`}
                   className="w-full h-auto max-h-96 object-contain bg-gray-50"
                 />
               </div>
               <p className="text-sm text-gray-600">
-                {imagemSelecionada.status === "lido" 
+                {imagemSelecionada.status === "lido"
                   ? "Esta imagem foi processada com sucesso pela IA e o código de barras foi identificado."
-                  : "Esta imagem não pôde ser processada adequadamente. O código de barras não foi identificado devido a problemas de qualidade, ângulo ou iluminação."
-                }
+                  : "Esta imagem não pôde ser processada adequadamente. O código de barras não foi identificado devido a problemas de qualidade, ângulo ou iluminação."}
               </p>
-              
+
               {/* Campo para edição manual quando status é "nao-lido" */}
               {imagemSelecionada.status === "nao-lido" && (
                 <div className="border-t pt-4 space-y-4">
@@ -492,14 +865,21 @@ const VisualizacaoGrid = () => {
                       className="font-mono"
                     />
                     <p className="text-xs text-gray-500">
-                      Digite o código de barras que não foi possível ler automaticamente
+                      Digite o código de barras que não foi possível ler
+                      automaticamente
                     </p>
                   </div>
                   <div className="flex gap-2 justify-end">
-                    <Button variant="outline" onClick={() => setCodigoManualModal("")}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setCodigoManualModal("")}
+                    >
                       Limpar
                     </Button>
-                    <Button onClick={handleSalvarCodigoModal} className="flex items-center gap-2">
+                    <Button
+                      onClick={handleSalvarCodigoModal}
+                      className="flex items-center gap-2"
+                    >
                       <Save className="h-4 w-4" />
                       Salvar Código
                     </Button>

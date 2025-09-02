@@ -3,14 +3,17 @@ import { buscaEmpresaId, buscaUsuarioId } from "../../config/auth";
 
 const authEndpoint = `relatorio-final`;
 
-export async function getRelatorioFinal(data_inicio, data_fim) {
+export async function getRelatorioFinal(id_cd,data_inicio, data_fim, codigo_rua) {
     const empresaId = buscaEmpresaId();
     const params = new URLSearchParams();
 
+    if(empresaId) params.append('id_empresa', empresaId);
+    if (id_cd) params.append('id_cd', id_cd);
     if (data_inicio) params.append('data_inicio', data_inicio);
     if (data_fim) params.append('data_fim', data_fim);
+    // if (codigo_rua) params.append('codigo_rua', codigo_rua);
 
-    const response = await Api.get(`${authEndpoint}/${empresaId}?${params.toString()}`);
+    const response = await Api.get(`${authEndpoint}/?${params.toString()}`);
     return response;
 }
 
