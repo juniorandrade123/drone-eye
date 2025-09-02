@@ -48,10 +48,11 @@ import EdicaoManualModal from "./EdicaoManualModal";
 import { DashboardService } from "@/api/services";
 import { RelatorioFinalService } from "@/api/services";
 import { ConfiguracaoRuaService } from "@/api/services";
+import { R2StorageService } from "@/api/services";
 import { ptBR } from "date-fns/locale";
 import { CentroDistribuicaoCard } from "@/types/dashboard-models";
 import { RuaDTO } from "@/types/rua-model";
-import { DadosInventario } from "@/types/relatorio-final-model";
+import { DadosInventario, RelatorioFinal } from "@/types/relatorio-final-model";
 
 const VisualizacaoGrid = () => {
   const [cdSelecionado, setCdSelecionado] = useState("");
@@ -487,12 +488,14 @@ const VisualizacaoGrid = () => {
   const getRelatoriosFinais = async () => {
     const dataInicioStr = formatDate(dataInicio, false);
     const dataFimStr = formatDate(dataFim, true);
-
+    const codigo_rua = ruasDisponiveis.find(
+      (r) => r.id === ruaSelecionada
+    )?.nome_rua;
     const apiResponse = await RelatorioFinalService.getRelatorioFinal(
       cdSelecionado,
       dataInicioStr,
       dataFimStr,
-      ruaSelecionada
+      codigo_rua
     );
 
     if (apiResponse.ok) {
@@ -506,8 +509,117 @@ const VisualizacaoGrid = () => {
     }
   };
 
-  const popularDadosInventario = (data: any) => {
-    // setDadosInventario(data);
+  const popularDadosInventario = (relatorios: RelatorioFinal[]) => {
+    // Extrai todos os códigos de posição únicos dos relatórios
+    const posicoes = Array.from(
+      new Set(relatorios.map((rel) => rel.codigo_posicao))
+    );
+    console.log(posicoes);
+    setDadosInventario({
+      [cdSelecionado]: {
+        [ruaSelecionada]: {
+          totalPosicoes: 8,
+          paletePorPosicao: 6,
+          tempoInicioInventario: "2024-01-15T08:00:00",
+          tempoEstimadoTotal: 4.5, // horas
+          ruasConcluidas: 2, // número de ruas já concluídas
+          posicoes: [
+            {
+              id: "P-01",
+              paletes: [
+                {
+                  id: "PAL-001",
+                  status: "lido",
+                  sku: "SKU001",
+                  foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
+                },
+                {
+                  id: "PAL-002",
+                  status: "lido",
+                  sku: "SKU002",
+                  foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
+                },
+                {
+                  id: "PAL-003",
+                  status: "nao-lido",
+                  sku: null,
+                  foto: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400",
+                },
+                { id: "PAL-004", status: "vazio", sku: null, foto: null },
+                {
+                  id: "PAL-005",
+                  status: "lido",
+                  sku: "SKU003",
+                  foto: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400",
+                },
+                {
+                  id: "PAL-006",
+                  status: "nao-lido",
+                  sku: null,
+                  foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
+                },
+              ],
+            },
+            {
+              id: "P-02",
+              paletes: [
+                {
+                  id: "PAL-007",
+                  status: "nao-lido",
+                  sku: null,
+                  foto: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
+                },
+                {
+                  id: "PAL-008",
+                  status: "lido",
+                  sku: "SKU004",
+                  foto: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400",
+                },
+                { id: "PAL-009", status: "vazio", sku: null, foto: null },
+                { id: "PAL-010", status: "vazio", sku: null, foto: null },
+                {
+                  id: "PAL-011",
+                  status: "lido",
+                  sku: "SKU005",
+                  foto: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400",
+                },
+                {
+                  id: "PAL-012",
+                  status: "nao-lido",
+                  sku: null,
+                  foto: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
+                },
+              ],
+            },
+            {
+              id: "P-03",
+              paletes: [
+                { id: "PAL-013", status: "vazio", sku: null, foto: null },
+                { id: "PAL-014", status: "vazio", sku: null, foto: null },
+                { id: "PAL-015", status: "vazio", sku: null, foto: null },
+                { id: "PAL-016", status: "vazio", sku: null, foto: null },
+                { id: "PAL-017", status: "vazio", sku: null, foto: null },
+                { id: "PAL-018", status: "vazio", sku: null, foto: null },
+              ],
+            },
+          ],
+        },
+      },
+    });
+  };
+
+  const gerarLink = async (nomeImagem: string) => {
+    const payload = {
+      id_cd: cdSelecionado,
+      codigo_rua: ruaSelecionada,
+      imagens: [{ nome_imagem: nomeImagem, expiracao: 600 }],
+    };
+
+    const apiReponse = await R2StorageService.gerarLinkImagem(payload);
+
+    if(apiReponse.ok){
+      window.open(apiReponse.data.imagens[0].url, "_blank");
+    }
   };
 
   useEffect(() => {
@@ -706,7 +818,10 @@ const VisualizacaoGrid = () => {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>
-                Rua {ruaSelecionada} - {cdSelecionado}
+                Rua{" "}
+                {ruasDisponiveis.find((r) => r.id === ruaSelecionada)?.nome_rua}{" "}
+                -{" "}
+                {cdsDisponiveis.find((cd) => cd.id_cd === cdSelecionado)?.nome}
               </span>
               <Badge variant="outline">
                 {dadosRua.paletePorPosicao} paletes por posição

@@ -7,7 +7,9 @@ import * as ConfiguracaoRuaService from './ConfiguracaoRuaService';
 import * as CategoriaArmazenagemService from './CategoriaArmazenagemService';
 import * as TipoArmazenagemService from './TipoArmazenagemService';
 import * as PosicaoEstoqueService from './PosicaoEstoqueService';
-import * as RelatorioFinalService from './RelatorioFinalService'
+import * as RelatorioFinalService from './RelatorioFinalService';
+import * as R2StorageService from './R2StorageService';
+
 export {
     LoginService,
     UsuarioService,
@@ -18,5 +20,6 @@ export {
     CategoriaArmazenagemService,
     TipoArmazenagemService,
     PosicaoEstoqueService,
-    RelatorioFinalService
+    RelatorioFinalService,
+    R2StorageService
 };
