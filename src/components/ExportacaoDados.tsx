@@ -447,7 +447,7 @@ const ExportacaoDados = () => {
                 <Label className="text-base font-semibold">
                   Filtros de Dados (Opcional)
                 </Label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">
                   <div className="space-y-2">
                     <Label>Centro de Distribuição</Label>
                     <Select
@@ -486,9 +486,6 @@ const ExportacaoDados = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-                {/* Filtros de data */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                   <div className="space-y-2">
                     <Label>Data Início</Label>
                     <Popover>

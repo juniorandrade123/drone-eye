@@ -52,9 +52,16 @@ import { R2StorageService } from "@/api/services";
 import { ptBR } from "date-fns/locale";
 import { CentroDistribuicaoCard } from "@/types/dashboard-models";
 import { RuaDTO } from "@/types/rua-model";
-import { DadosInventario, RelatorioFinal } from "@/types/relatorio-final-model";
+import { DadosInventario, PaleteInventario, RelatorioFinal } from "@/types/relatorio-final-model";
 
 const VisualizacaoGrid = () => {
+  // Estados para controlar o mês visível dos calendários
+  const [mesInicioVisivel, setMesInicioVisivel] = useState<Date | undefined>(
+    undefined
+  );
+  const [mesFimVisivel, setMesFimVisivel] = useState<Date | undefined>(
+    undefined
+  );
   const [cdSelecionado, setCdSelecionado] = useState("");
   const [cdsDisponiveis, setCdsDisponiveis] = useState<
     CentroDistribuicaoCard[]
@@ -71,7 +78,7 @@ const VisualizacaoGrid = () => {
     status: string;
     palete: string;
   } | null>(null);
-  const [paleteParaEdicao, setPaleteParaEdicao] = useState<any>(null);
+  const [paleteParaEdicao, setPaleteParaEdicao] = useState(null);
   const [codigoManualModal, setCodigoManualModal] = useState("");
   const [linkFoto, setLinkFoto] = useState("");
   const { toast } = useToast();
@@ -169,7 +176,7 @@ const VisualizacaoGrid = () => {
     };
   };
 
-  const handlePaleteClick = (palete: any, event?: React.MouseEvent) => {
+  const handlePaleteClick = (palete: PaleteInventario, event?: React.MouseEvent) => {
     if (palete.status === "vazio") return;
 
     gerarLink(palete.foto);
@@ -288,6 +295,15 @@ const VisualizacaoGrid = () => {
   };
 
   const getRelatoriosFinais = async () => {
+    if (dataFim < dataInicio) {
+      toast({
+        title: "Erro",
+        description: "A data fim não pode ser anterior à data início.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const dataInicioStr = formatDate(dataInicio, false);
     const dataFimStr = formatDate(dataFim, true);
     const codigo_rua = ruasDisponiveis.find(
@@ -396,7 +412,7 @@ const VisualizacaoGrid = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="space-y-2">
               <label className="text-sm font-medium">
                 Centro de Distribuição
@@ -440,10 +456,6 @@ const VisualizacaoGrid = () => {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          {/* Filtros de data */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
             <div className="space-y-2">
               <Label>Data Início</Label>
               <Popover>
@@ -459,12 +471,22 @@ const VisualizacaoGrid = () => {
                     className="cursor-pointer bg-white"
                   />
                 </PopoverTrigger>
-                <PopoverContent align="start" className="w-auto p-0">
+                <PopoverContent
+                  align="start"
+                  side="bottom"
+                  avoidCollisions={false}
+                  className="w-auto p-0"
+                >
                   <Calendar
                     mode="single"
                     selected={dataInicio}
-                    onSelect={setDataInicio}
+                    onSelect={(date) => {
+                      setDataInicio(date);
+                      setMesInicioVisivel(date);
+                    }}
                     locale={ptBR}
+                    month={mesInicioVisivel || dataInicio}
+                    onMonthChange={setMesInicioVisivel}
                     className="rounded-md border"
                   />
                 </PopoverContent>
@@ -483,12 +505,22 @@ const VisualizacaoGrid = () => {
                     className="cursor-pointer bg-white"
                   />
                 </PopoverTrigger>
-                <PopoverContent align="start" className="w-auto p-0">
+                <PopoverContent
+                  align="start"
+                  side="bottom"
+                  avoidCollisions={false}
+                  className="w-auto p-0"
+                >
                   <Calendar
                     mode="single"
                     selected={dataFim}
-                    onSelect={setDataFim}
+                    onSelect={(date) => {
+                      setDataFim(date);
+                      setMesFimVisivel(date);
+                    }}
                     locale={ptBR}
+                    month={mesFimVisivel || dataFim}
+                    onMonthChange={setMesFimVisivel}
                     className="rounded-md border"
                   />
                 </PopoverContent>
@@ -591,7 +623,7 @@ const VisualizacaoGrid = () => {
                   >
                     {posicao.paletes.map((palete, idx) => (
                       <div
-                        key={palete.id + '-' + posicao.id + '-' + idx}
+                        key={palete.id + "-" + posicao.id + "-" + idx}
                         className={`p-3 rounded-lg border-2 transition-all cursor-pointer relative ${getStatusColor(
                           palete.status
                         )} ${
@@ -713,7 +745,9 @@ const VisualizacaoGrid = () => {
                     Ver foto do código de barras
                   </a>
                 )}
-                {!linkFoto && <span>Código de barras não foi identificado</span>}
+                {!linkFoto && (
+                  <span>Código de barras não foi identificado</span>
+                )}
               </div>
               <p className="text-sm text-gray-600">
                 {imagemSelecionada.status === "lido"
