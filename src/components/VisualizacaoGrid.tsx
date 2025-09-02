@@ -76,12 +76,16 @@ const VisualizacaoGrid = () => {
   const [linkFoto, setLinkFoto] = useState("");
   const { toast } = useToast();
 
-  const [dataInicio, setDataInicio] = useState<Date | undefined>(
-    new Date(2025, 3, 1)
-  );
-  const [dataFim, setDataFim] = useState<Date | undefined>(
-    new Date(2025, 11, 30)
-  );
+  const [dataInicio, setDataInicio] = useState<Date | undefined>(() => {
+    const now = new Date();
+    const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    return threeMonthsAgo;
+  });
+
+  const [dataFim, setDataFim] = useState<Date | undefined>(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  });
 
   const [dadosInventario, setDadosInventario] = useState<DadosInventario>({});
 
@@ -170,11 +174,11 @@ const VisualizacaoGrid = () => {
 
     gerarLink(palete.foto);
     // Se foi clique com Ctrl/Cmd, abrir modal de edição
-    if (event?.ctrlKey || event?.metaKey) {
-      setPaleteParaEdicao(palete);
-      setModalEdicaoAberto(true);
-      return;
-    }
+    // if (event?.ctrlKey || event?.metaKey) {
+    //   setPaleteParaEdicao(palete);
+    //   setModalEdicaoAberto(true);
+    //   return;
+    // }
 
     setImagemSelecionada({
       url: palete.foto,
@@ -506,12 +510,12 @@ const VisualizacaoGrid = () => {
               <Circle className="h-4 w-4 text-gray-400" />
               <span className="text-sm">Vazio</span>
             </div>
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <Edit className="h-4 w-4 text-blue-600" />
               <span className="text-sm">
                 Ctrl+Click para editar manualmente
               </span>
-            </div>
+            </div> */}
           </div>
         </CardContent>
       </Card>
@@ -585,9 +589,9 @@ const VisualizacaoGrid = () => {
                       dadosRua.paletePorPosicao
                     )} gap-2`}
                   >
-                    {posicao.paletes.map((palete) => (
+                    {posicao.paletes.map((palete, idx) => (
                       <div
-                        key={palete.id}
+                        key={palete.id + '-' + posicao.id + '-' + idx}
                         className={`p-3 rounded-lg border-2 transition-all cursor-pointer relative ${getStatusColor(
                           palete.status
                         )} ${

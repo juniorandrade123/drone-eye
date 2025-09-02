@@ -7,7 +7,6 @@ export async function getRelatorioFinal(id_cd,data_inicio, data_fim, codigo_rua)
     const empresaId = buscaEmpresaId();
     const params = new URLSearchParams();
     
-    // codigo_rua = "string"
     if(empresaId) params.append('id_empresa', empresaId);
     if (id_cd) params.append('id_cd', id_cd);
     if (data_inicio) params.append('data_inicio', data_inicio);

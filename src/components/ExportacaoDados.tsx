@@ -52,8 +52,17 @@ const ExportacaoDados = () => {
   const { toast } = useToast();
   const [cds, setCds] = useState<CentroDistribuicaoCard[]>([]);
   const [ruas, setRuas] = useState<RuaDTO[]>([]);
-  const [dataInicio, setDataInicio] = useState<Date | undefined>();
-  const [dataFim, setDataFim] = useState<Date | undefined>();
+
+  const [dataInicio, setDataInicio] = useState<Date | undefined>(() => {
+    const now = new Date();
+    const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() , 1);
+    return threeMonthsAgo;
+  });
+
+  const [dataFim, setDataFim] = useState<Date | undefined>(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  });
 
   // Layouts pré-definidos
   const layoutsDisponiveis = {
@@ -286,7 +295,6 @@ const ExportacaoDados = () => {
   };
 
   const getRelatoriosFinais = async () => {
-
     const dataInicioStr = formatDate(dataInicio, false);
     const dataFimStr = formatDate(dataFim, true);
 
@@ -514,7 +522,9 @@ const ExportacaoDados = () => {
                         <Input
                           readOnly
                           value={
-                            dataFim ? dataFim.toLocaleDateString("pt-BR") : undefined
+                            dataFim
+                              ? dataFim.toLocaleDateString("pt-BR")
+                              : undefined
                           }
                           placeholder="Selecione a data de fim"
                           className="cursor-pointer bg-white"
