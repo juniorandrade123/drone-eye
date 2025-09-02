@@ -17,3 +17,10 @@ export const buscaEmpresaId = () => {
     const session = JSON.parse(userStr);
     return session.empresa.id;
 }
+
+export const buscaUsuarioId = () => {
+    const userStr = sessionStorage.getItem(USER_KEY);
+    if (!userStr) return '';
+    const session = JSON.parse(userStr);
+    return session.usuario.id;
+}
