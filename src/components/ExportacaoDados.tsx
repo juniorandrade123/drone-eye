@@ -1,4 +1,11 @@
 import { useEffect, useState } from "react";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import ptBR from "@/locales/ptBR";
 import {
   Card,
   CardContent,
@@ -45,6 +52,8 @@ const ExportacaoDados = () => {
   const { toast } = useToast();
   const [cds, setCds] = useState<CentroDistribuicaoCard[]>([]);
   const [ruas, setRuas] = useState<RuaDTO[]>([]);
+  const [dataInicio, setDataInicio] = useState<Date | undefined>();
+  const [dataFim, setDataFim] = useState<Date | undefined>();
 
   // Layouts pré-definidos
   const layoutsDisponiveis = {
@@ -136,20 +145,25 @@ const ExportacaoDados = () => {
   ];
 
   const handleExportar = () => {
+    if (!cdSelecionado || !ruaSelecionada || !dataInicio || !dataFim) {
+      toast({
+        title: "Erro",
+        description: "Todos os campos são obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (dataFim < dataInicio) {
+      toast({
+        title: "Erro",
+        description: "A data fim não pode ser anterior à data início.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     getRelatoriosFinais();
-
-    // toast({
-    //   title: "Exportação iniciada!",
-    //   description: `Gerando arquivo ${nomeArquivo}.${formatoExportacao.toLowerCase()} com layout ${layoutSelecionado}`,
-    // });
-
-    // // Simular download após 2 segundos
-    // setTimeout(() => {
-    //   toast({
-    //     title: "Exportação concluída!",
-    //     description: `Arquivo ${nomeArquivo}.${formatoExportacao.toLowerCase()} foi gerado com sucesso`,
-    //   });
-    // }, 2000);
   };
 
   const getFormatoIcon = (formato: string) => {
@@ -232,12 +246,17 @@ const ExportacaoDados = () => {
   };
 
   const getRuas = async () => {
-    const cd = cds.find((item) => item.nome === cdSelecionado);
-
-    const apiResponse = await ConfiguracaoRuaService.listarRuas(cd.id_cd);
+    if (!cdSelecionado) return;
+    const apiResponse = await ConfiguracaoRuaService.listarRuas(cdSelecionado);
     if (apiResponse.ok) {
       const data = apiResponse.data;
       setRuas(data);
+      if (data.length === 0) {
+        toast({
+          title: "Atenção",
+          description: "Centro de Distribuição não possui ruas ativas",
+        });
+      }
     } else {
       toast({
         title: "Erro",
@@ -245,22 +264,13 @@ const ExportacaoDados = () => {
       });
     }
   };
-  // Função para obter o intervalo de datas
-  const getIntervaloDatas = () => {
-    const now = new Date();
+
+  const formatDate = (date: Date | undefined, endOfDay = false) => {
+    if (!date) return "";
     const pad = (n: number) => n.toString().padStart(2, "0");
-    const formatDate = (date: Date, endOfDay = false) =>
-      `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
-        date.getDate()
-      )}T${endOfDay ? "23:59:59" : "00:00:00"}`;
-
-    const firstDay = new Date(now.getFullYear(), 0, 1);
-    const lastDay = new Date(now.getFullYear(), 11, 31);
-
-    return {
-      dataInicio: formatDate(firstDay, false),
-      dataFim: formatDate(lastDay, true),
-    };
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+      date.getDate()
+    )}T${endOfDay ? "23:59:59" : "00:00:00"}`;
   };
 
   const prepararDownloadXml = (xmlContent: string, nomeArquivo: string) => {
@@ -275,9 +285,10 @@ const ExportacaoDados = () => {
     URL.revokeObjectURL(url);
   };
 
-  // Função principal de exportação
   const getRelatoriosFinais = async () => {
-    const { dataInicio, dataFim } = getIntervaloDatas();
+
+    const dataInicioStr = formatDate(dataInicio, false);
+    const dataFimStr = formatDate(dataFim, true);
 
     toast({
       title: "Exportação iniciada!",
@@ -286,8 +297,8 @@ const ExportacaoDados = () => {
 
     const apiResponse = await RelatorioFinalService.getRelatorioXml(
       cdSelecionado,
-      dataInicio,
-      dataFim,
+      dataInicioStr,
+      dataFimStr,
       ruaSelecionada
     );
     if (apiResponse.ok) {
@@ -436,10 +447,9 @@ const ExportacaoDados = () => {
                       onValueChange={setCdSelecionado}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Todos os CDs" />
+                        <SelectValue placeholder="Selecione o Cd" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="todos">Todos os CDs</SelectItem>
                         {cds.map((cd) => (
                           <SelectItem key={cd.id_cd} value={cd.id_cd}>
                             {cd.nome}
@@ -457,10 +467,9 @@ const ExportacaoDados = () => {
                       disabled={!cdSelecionado}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Todas as ruas" />
+                        <SelectValue placeholder="Selecione a rua" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="todas">Todas as ruas</SelectItem>
                         {ruas.map((rua) => (
                           <SelectItem key={rua.id} value={rua.id}>
                             {rua.nome_rua}
@@ -468,6 +477,59 @@ const ExportacaoDados = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                </div>
+                {/* Filtros de data */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                  <div className="space-y-2">
+                    <Label>Data Início</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Input
+                          readOnly
+                          value={
+                            dataInicio
+                              ? dataInicio.toLocaleDateString("pt-BR")
+                              : undefined
+                          }
+                          placeholder="Selecione a data de início"
+                          className="cursor-pointer bg-white"
+                        />
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={dataInicio}
+                          onSelect={setDataInicio}
+                          locale={ptBR}
+                          className="rounded-md border"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Data Fim</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Input
+                          readOnly
+                          value={
+                            dataFim ? dataFim.toLocaleDateString("pt-BR") : undefined
+                          }
+                          placeholder="Selecione a data de fim"
+                          className="cursor-pointer bg-white"
+                        />
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={dataFim}
+                          onSelect={setDataFim}
+                          locale={ptBR}
+                          className="rounded-md border"
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
               </div>
@@ -487,7 +549,7 @@ const ExportacaoDados = () => {
           </Card>
 
           {/* Resumo dos Dados */}
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle>Resumo dos Dados para Exportação</CardTitle>
             </CardHeader>
@@ -511,7 +573,7 @@ const ExportacaoDados = () => {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </TabsContent>
 
         <TabsContent value="preview" className="space-y-6">
