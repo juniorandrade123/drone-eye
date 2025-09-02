@@ -20,6 +20,7 @@ export interface PaleteInventario {
     status: PaleteStatus;
     sku: string | null;
     foto: string | null;
+    linkFoto: string | null;
 }
 
 export interface PosicaoInventario {

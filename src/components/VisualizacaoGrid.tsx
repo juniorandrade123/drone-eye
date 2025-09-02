@@ -52,7 +52,12 @@ import { R2StorageService } from "@/api/services";
 import { ptBR } from "date-fns/locale";
 import { CentroDistribuicaoCard } from "@/types/dashboard-models";
 import { RuaDTO } from "@/types/rua-model";
-import { DadosInventario, PaleteInventario, RelatorioFinal } from "@/types/relatorio-final-model";
+import {
+  DadosInventario,
+  PaleteInventario,
+  PosicaoInventario,
+  RelatorioFinal,
+} from "@/types/relatorio-final-model";
 
 const VisualizacaoGrid = () => {
   // Estados para controlar o mês visível dos calendários
@@ -95,6 +100,13 @@ const VisualizacaoGrid = () => {
   });
 
   const [dadosInventario, setDadosInventario] = useState<DadosInventario>({});
+
+  const imagesMock = [
+    "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
+    "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
+    "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400",
+    "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400",
+  ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -176,10 +188,13 @@ const VisualizacaoGrid = () => {
     };
   };
 
-  const handlePaleteClick = (palete: PaleteInventario, event?: React.MouseEvent) => {
+  const handlePaleteClick = (
+    palete: PaleteInventario,
+    event?: React.MouseEvent
+  ) => {
     if (palete.status === "vazio") return;
 
-    gerarLink(palete.foto);
+    gerarLink(palete.linkFoto);
     // Se foi clique com Ctrl/Cmd, abrir modal de edição
     // if (event?.ctrlKey || event?.metaKey) {
     //   setPaleteParaEdicao(palete);
@@ -331,7 +346,8 @@ const VisualizacaoGrid = () => {
     const posicoesMap: {
       [
         posicao: string
-      ]: import("@/types/relatorio-final-model").PosicaoInventario;
+      ]: PosicaoInventario;
+
     } = {};
     relatorios.forEach((rel) => {
       if (!posicoesMap[rel.codigo_posicao]) {
@@ -345,10 +361,8 @@ const VisualizacaoGrid = () => {
         id: rel.codigo_palete,
         status: "lido",
         sku: null, // Não vem do backend
-        foto:
-          rel.imagem_palete && rel.imagem_palete.toUpperCase() !== "VAZIO"
-            ? rel.imagem_palete
-            : null,
+        foto: imagesMock[Math.floor(Math.random() * imagesMock.length)],
+        linkFoto: rel.imagem_palete,
       });
     });
 
@@ -735,15 +749,23 @@ const VisualizacaoGrid = () => {
                 </Badge>
               </div>
               <div className=" rounded-lg overflow-hidden">
+                <img
+                  src={imagemSelecionada.url}
+                  alt={`Foto do código de barras - ${imagemSelecionada.palete}`}
+                  className="w-full h-auto max-h-98 object-contain bg-gray-50"
+                />
+
                 {linkFoto && (
-                  <a
-                    href={linkFoto}
-                    className="text-blue-600 hover:underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Ver foto do código de barras
-                  </a>
+                    <div className="flex justify-center mt-4">
+                    <a
+                      href={linkFoto}
+                      className="text-blue-600 hover:underline align-middle"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Ver foto do código de barras
+                    </a>
+                    </div>
                 )}
                 {!linkFoto && (
                   <span>Código de barras não foi identificado</span>
