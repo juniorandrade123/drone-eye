@@ -15,11 +15,22 @@ const maskMap: Record<MaskType, string> = {
 
 interface InputProps extends React.ComponentProps<"input"> {
   maskType?: MaskType
+  onlyNumber?: boolean
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, maskType, ...props }, ref) => {
+  ({ className, type, maskType, onlyNumber, ...props }, ref) => {
     const mask = maskType ? maskMap[maskType] : undefined
+
+    const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (onlyNumber && !/[0-9]/.test(e.key)) {
+        e.preventDefault();
+      }
+      if (props.onKeyPress) {
+        props.onKeyPress(e);
+      }
+    };
+
     if (mask) {
       return (
         <InputMask
@@ -36,6 +47,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
                 className
               )}
+              onKeyPress={handleKeyPress}
             />
           )}
         </InputMask>
@@ -51,6 +63,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         )}
         ref={ref}
         {...props}
+        onKeyPress={handleKeyPress}
       />
     )
   }
