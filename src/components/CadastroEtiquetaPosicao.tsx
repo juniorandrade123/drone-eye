@@ -26,18 +26,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, MapPin } from "lucide-react";
+import { Plus, Edit, Trash2, MapPin, HelpCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { PosicaoEstoqueService } from "@/api/services";
 import { TipoArmazenagemService } from "@/api/services";
-import { CentroDistribuicaoService } from "@/api/services";
 import { DashboardService } from "@/api/services";
 import { ConfiguracaoRuaService } from "@/api/services";
 import { TipoArmazenagem } from "@/types/tipo-armazenagem-model";
 import { useEffect } from "react";
 import { CentroDistribuicaoCard } from "@/types/dashboard-models";
 import { RuaDTO } from "@/types/rua-model";
-
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 interface EtiquetaPosicao {
   id: string;
   codigo: string;
@@ -575,7 +578,15 @@ const CadastroEtiquetaPosicao = () => {
               <TableRow>
                 <TableHead>Código</TableHead>
                 <TableHead>CD</TableHead>
-                <TableHead>Localização</TableHead>
+                <TableHead className="flex items-center gap-1">
+                  <span>Localização</span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={8}>bloco-nível-posição-modulo</TooltipContent>
+                  </Tooltip>
+                </TableHead>
                 <TableHead>Capacidade</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Status</TableHead>
