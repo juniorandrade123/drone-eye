@@ -1,10 +1,8 @@
 import { Api } from "../../config";
-import { buscaEmpresaId } from "../../config/auth";
 
 const authEndpoint = 'empresa';
 
 export async function getEmpresas(limit = 100) {
-    const empresaId = buscaEmpresaId();
     const response = await Api.get(authEndpoint + `?limit=${limit}`);
 
     return response;

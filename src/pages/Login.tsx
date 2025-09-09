@@ -23,7 +23,6 @@ const Login = () => {
   async function authenticate(user: string, password: string) {
     setIsLoading(true);
     const apiResponse = await LoginService.login({ email: user, senha: password });
-    console.log("API Response:", apiResponse);
     if (apiResponse.ok) {
       login(apiResponse.data.token, JSON.stringify(apiResponse.data));
       toast({

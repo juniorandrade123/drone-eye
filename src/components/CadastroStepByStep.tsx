@@ -639,8 +639,8 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
                       <SelectValue placeholder="Selecione o lado" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem key="Esquerda" value="0">Esquerda</SelectItem>
-                      <SelectItem key="Direita" value="1">Direita</SelectItem>
+                      <SelectItem key="Esquerdo" value="0">Esquerdo</SelectItem>
+                      <SelectItem key="Direito" value="1">Direito</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

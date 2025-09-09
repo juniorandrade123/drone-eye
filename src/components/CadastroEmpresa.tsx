@@ -17,7 +17,7 @@ import { useEffect } from "react";
 import moment from "moment";
 import { isValidCNPJ } from "@/lib/utils";
 
-interface Empresa {
+export interface Empresa {
   id: string;
   nome: string;
   cnpj: string;
@@ -166,6 +166,7 @@ const CadastroEmpresa = () => {
       });
       getEmpresas();
       setFormData({ nome: "", razao: "", cnpj: "", email: "", telefone: "" });
+      setEditingId(null);
     } else {
       toast({
         title: "Erro",
