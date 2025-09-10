@@ -367,7 +367,7 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
                     variant="default"
                     size="sm"
                     onClick={() => handleFinalizar(cd.id)}
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white"
                   >
                     <CheckCircle className="h-4 w-4" />
                     Finalizar
@@ -377,7 +377,7 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
                     variant="default"
                     size="sm"
                     onClick={() => handleRemover(cd.id)}
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white"
                   >
                     <Trash className="h-4 w-4" />
                     Remover

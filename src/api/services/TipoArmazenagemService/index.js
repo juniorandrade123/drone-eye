@@ -3,8 +3,7 @@ import { buscaEmpresaId } from "../../config/auth";
 
 const authEndpoint = `empresas`;
 
-export async function getArmazenagens(ativo) {
-    const empresaId = buscaEmpresaId();
+export async function getArmazenagens(ativo, empresaId) {
     const params = new URLSearchParams();
     
     if (typeof ativo === 'boolean') params.append('ativo', ativo);
@@ -13,9 +12,7 @@ export async function getArmazenagens(ativo) {
     return response;
 }
 
-export async function getArmazenagemById(id_armazenagem) {
-    const empresaId = buscaEmpresaId();
-
+export async function getArmazenagemById(id_armazenagem,empresaId) {
     const response = await Api.get(`${authEndpoint}/${empresaId}/tipos-armazenagem/${id_armazenagem}`);
     return response;
 }
