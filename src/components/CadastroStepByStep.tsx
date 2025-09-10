@@ -26,13 +26,14 @@ import {
   Package,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { buscaEmpresaId } from "@/api/config/auth";
 import { CentroDistribuicaoService } from "@/api/services";
 import { ConfiguracaoRuaService } from "@/api/services";
 import { TipoArmazenagemService } from "@/api/services";
 import { useEffect } from "react";
 import { RuaDTO } from "@/types/rua-model";
 import { categoriaArmazenagemDTO } from "@/types/categoria-armazenagem-model";
+import { EmpresaService } from "@/api/services";
+import { Empresa } from "./CadastroEmpresa";
 
 const CadastroStepByStep = ({ idCd: idCdProp }) => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -46,6 +47,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
     telefone: "",
     codigo: "",
     estado: "",
+    empresa: "",
     ruas: [] as Array<{
       nome: string;
       tipoArmazenagem: string;
@@ -64,7 +66,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
     paletePorPosicao: 4,
     etiquetaPosicao: "",
     etiquetaPalete: "",
-    ladoRua: '',
+    ladoRua: "",
   });
 
   const [tiposArmazenagem, setTiposArmazenagem] = useState<
@@ -72,6 +74,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
   >([]);
 
   const [idCd, setIdCd] = useState<string | undefined>(idCdProp?.idCd);
+  const [empresas, setEmpresas] = useState<Empresa[]>([]);
 
   const estados = [
     "AC",
@@ -118,8 +121,12 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
   }, [idCd]);
 
   useEffect(() => {
-    listarCategorias();
+    getEmpresas();
   }, []);
+
+  useEffect(() => {
+    if (formData.empresa) listarCategorias();
+  }, [formData.empresa]);
 
   useEffect(() => {
     if (idCd) {
@@ -195,7 +202,10 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
           etiqueta_palete: rua.etiquetaPalete || "",
         };
 
-        const response = await ConfiguracaoRuaService.createRua(payload);
+        const response = await ConfiguracaoRuaService.createRua(
+          payload,
+          formData.empresa
+        );
         if (!response.ok) {
           allOk = false;
           break;
@@ -269,11 +279,9 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
   };
 
   const criarCd = async () => {
-    const empresaId = buscaEmpresaId();
-
     const apiResponse = await CentroDistribuicaoService.createCD({
       nome: formData.nome,
-      id_empresa: empresaId,
+      id_empresa: formData.empresa,
       endereco: formData.endereco,
       cidade: formData.cidade,
       cep: formData.cep,
@@ -297,6 +305,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
         telefone: "",
         codigo: "",
         estado: "",
+        empresa: "",
         ruas: [],
       });
       criarRua(apiResponse.data.id);
@@ -333,7 +342,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
   const listarRuas = async () => {
     if (!idCd) return;
 
-    const response = await ConfiguracaoRuaService.listarRuas(idCd);
+    const response = await ConfiguracaoRuaService.listarRuas(idCd, false, formData.empresa);
     if (response.ok) {
       const data: RuaDTO[] = response.data;
 
@@ -366,7 +375,8 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
     id_armazenagem: string
   ): Promise<string | undefined> => {
     const apiResponse = await TipoArmazenagemService.getArmazenagemById(
-      id_armazenagem
+      id_armazenagem,
+      formData.empresa
     );
     if (apiResponse.ok) {
       const data: categoriaArmazenagemDTO = apiResponse.data;
@@ -376,7 +386,10 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
   };
 
   const listarCategorias = async () => {
-    const apiResponse = await TipoArmazenagemService.getArmazenagens();
+    const apiResponse = await TipoArmazenagemService.getArmazenagens(
+      true,
+      formData.empresa
+    );
 
     if (apiResponse.ok) {
       const data: categoriaArmazenagemDTO[] = apiResponse.data;
@@ -386,6 +399,15 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
           value: cat.id,
         }))
       );
+
+      if (data.length === 0) {
+        formData.empresa = "";
+        toast({
+          title: "Erro",
+          description: "Empresa não possui Tipo de Armazenagem ",
+        });
+      }
+
     } else {
       toast({
         title: "Erro",
@@ -427,8 +449,22 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
     formData.cep &&
     formData.estado &&
     formData.codigo &&
+    formData.empresa &&
     formData.email;
   const isStep2Valid = formData.ruas.length > 0;
+
+  const getEmpresas = async () => {
+    const apiResponse = await EmpresaService.getEmpresas();
+
+    if (apiResponse.ok) {
+      setEmpresas(apiResponse.data as Empresa[]);
+    } else {
+      toast({
+        title: "Erro",
+        description: apiResponse.error.message,
+      });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -492,6 +528,26 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
                   }
                   placeholder="Ex: CD São Paulo"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Empresa *</Label>
+                <Select
+                  value={formData.empresa}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, empresa: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a empresa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {empresas.map((empresa) => (
+                      <SelectItem key={empresa.id} value={empresa.id}>
+                        {empresa.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>CEP *</Label>
@@ -639,8 +695,12 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
                       <SelectValue placeholder="Selecione o lado" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem key="Esquerdo" value="0">Esquerdo</SelectItem>
-                      <SelectItem key="Direito" value="1">Direito</SelectItem>
+                      <SelectItem key="Esquerdo" value="0">
+                        Esquerdo
+                      </SelectItem>
+                      <SelectItem key="Direito" value="1">
+                        Direito
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -826,6 +886,11 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <strong>Nome:</strong> {formData.nome}
+                </div>
+                <div>
+                  <strong>Empresa:</strong>{" "}
+                  {empresas.find((e) => e.id === formData.empresa)?.nome ||
+                    formData.empresa}
                 </div>
                 <div>
                   <strong>CEP:</strong> {formData.cep}

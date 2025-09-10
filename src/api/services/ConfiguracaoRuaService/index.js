@@ -18,9 +18,7 @@ export async function listarRuas(id_cd, incluir_inativas, id_empresa) {
   return response;
 }
 
-export async function createRua(payload) {
-  const empresaId = buscaEmpresaId();
-  
+export async function createRua(payload, empresaId) {
   const response = await Api.post(
     `/empresas/${empresaId}/cds/${payload.id_cd}/${authEndpoint}`,
     payload
