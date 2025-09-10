@@ -205,7 +205,18 @@ const VisualizacaoGrid = ({ idCd: idCdProp }) => {
   ) => {
     if (palete.status === "vazio") return;
 
-    gerarLink(palete.linkFoto);
+    (async () => {
+      const link = await gerarLink(palete.linkFoto);
+      setImagemSelecionada({
+        url: link || palete.foto || "",
+        status: palete.status,
+        palete: palete.id,
+      });
+      setCodigoManualModal("");
+      setModalAberto(true);
+      console.log("Link da imagem gerado:", imagemSelecionada);
+    })();
+
     // Se foi clique com Ctrl/Cmd, abrir modal de edição
     // if (event?.ctrlKey || event?.metaKey) {
     //   setPaleteParaEdicao(palete);
@@ -213,14 +224,6 @@ const VisualizacaoGrid = ({ idCd: idCdProp }) => {
     //   return;
     // }
 
-    setImagemSelecionada({
-      url: palete.foto,
-      status: palete.status,
-      palete: palete.id,
-    });
-
-    setCodigoManualModal("");
-    setModalAberto(true);
   };
 
   const handleSalvarEdicaoManual = (paleteId: string, sku: string) => {
@@ -377,8 +380,8 @@ const VisualizacaoGrid = ({ idCd: idCdProp }) => {
       posicoesMap[rel.codigo_posicao].paletes.push({
         id: rel.codigo_palete,
         status: "lido",
-        sku: null, // Não vem do backend
-        foto: imagesMock[Math.floor(Math.random() * imagesMock.length)],
+        sku: null,
+        foto: rel.imagem_palete,
         linkFoto: rel.imagem_palete,
       });
     });
@@ -398,9 +401,10 @@ const VisualizacaoGrid = ({ idCd: idCdProp }) => {
     });
   };
 
-  const gerarLink = async (nomeImagem: string) => {
+  const gerarLink = async (nomeImagem: string): Promise<string> => {
     if (!nomeImagem) {
       setLinkFoto("");
+      return "";
     }
     const payload = {
       id_cd: cdSelecionado,
@@ -412,8 +416,10 @@ const VisualizacaoGrid = ({ idCd: idCdProp }) => {
 
     if (apiResponse.ok) {
       setLinkFoto(apiResponse.data.imagens[0].url);
+      return apiResponse.data.imagens[0].url;
     } else {
       setLinkFoto("");
+      return "";
     }
   };
 
@@ -882,7 +888,6 @@ const VisualizacaoGrid = ({ idCd: idCdProp }) => {
                   alt={`Foto do código de barras - ${imagemSelecionada.palete}`}
                   className="w-full h-auto max-h-98 object-contain bg-gray-50"
                 />
-
                 {linkFoto && (
                   <div className="flex justify-center mt-4">
                     <a
