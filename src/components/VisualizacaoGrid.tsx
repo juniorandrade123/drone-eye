@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -58,8 +58,13 @@ import {
   PosicaoInventario,
   RelatorioFinal,
 } from "@/types/relatorio-final-model";
+import { Empresa } from "./CadastroEmpresa";
+import moment from "moment";
+import { EmpresaService } from "@/api/services";
+import { set } from "date-fns";
+import { buscaEmpresaId } from "@/api/config/auth";
 
-const VisualizacaoGrid = () => {
+const VisualizacaoGrid = ({ idCd: idCdProp }) => {
   // Estados para controlar o mês visível dos calendários
   const [mesInicioVisivel, setMesInicioVisivel] = useState<Date | undefined>(
     undefined
@@ -69,10 +74,11 @@ const VisualizacaoGrid = () => {
   );
   const [cdSelecionado, setCdSelecionado] = useState("");
   const [cdsDisponiveis, setCdsDisponiveis] = useState<
-    CentroDistribuicaoCard[]
+  CentroDistribuicaoCard[]
   >([]);
   const [ruasDisponiveis, setRuasDisponiveis] = useState<RuaDTO[]>([]);
   const [ruaSelecionada, setRuaSelecionada] = useState("");
+  const [statusSelecionado, setStatusSelecionado] = useState("");
   const [posicaoSelecionada, setPosicaoSelecionada] = useState<string | null>(
     null
   );
@@ -86,8 +92,11 @@ const VisualizacaoGrid = () => {
   const [paleteParaEdicao, setPaleteParaEdicao] = useState(null);
   const [codigoManualModal, setCodigoManualModal] = useState("");
   const [linkFoto, setLinkFoto] = useState("");
+  const [ladoRua, setLadoRua] = useState("");
   const { toast } = useToast();
-
+  const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [empresaSelecionada, setEmpresaSelecionada] = useState("");
+  
   const [dataInicio, setDataInicio] = useState<Date | undefined>(() => {
     const now = new Date();
     const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
@@ -100,6 +109,15 @@ const VisualizacaoGrid = () => {
   });
 
   const [dadosInventario, setDadosInventario] = useState<DadosInventario>({});
+
+  const [idCd, setIdCd] = useState<string | undefined>(idCdProp);
+
+  const imagesMock = [
+    "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
+    "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
+    "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400",
+    "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400",
+  ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -265,10 +283,17 @@ const VisualizacaoGrid = () => {
   const kpis = calcularKPIsTempo();
 
   const getCds = async () => {
-    const apiResponse = await DashboardService.getCdsStatus();
+    if(empresaSelecionada === "") return;
+    const apiResponse = await DashboardService.getCdsStatus(empresaSelecionada);
     if (apiResponse.ok) {
       const data = apiResponse.data.cds;
       setCdsDisponiveis(data);
+      if (data.length === 0) {
+        toast({
+          title: "Atenção",
+          description: "Empresa não possui Centros de Distribuição ativos",
+        });
+      }
     } else {
       toast({
         title: "Erro",
@@ -279,7 +304,8 @@ const VisualizacaoGrid = () => {
 
   const getRuas = async () => {
     if (!cdSelecionado) return;
-    const apiResponse = await ConfiguracaoRuaService.listarRuas(cdSelecionado);
+    const apiResponse = await ConfiguracaoRuaService.listarRuas(cdSelecionado, false, empresaSelecionada);
+    
     if (apiResponse.ok) {
       const data = apiResponse.data;
       setRuasDisponiveis(data);
@@ -290,9 +316,10 @@ const VisualizacaoGrid = () => {
         });
       }
     } else {
+      const data = apiResponse;
       toast({
         title: "Erro",
-        description: "Erro ao carregar Ruas.",
+        description: data.error.message || "Erro ao carregar Ruas.",
       });
     }
   };
@@ -396,9 +423,52 @@ const VisualizacaoGrid = () => {
     }
   };
 
+  const carregarDadosIniciais = useCallback(async () => {
+    if (idCd) {
+      try {
+        setEmpresaSelecionada(buscaEmpresaId)
+        await setCdSelecionado(idCd);
+        setTimeout(() => {
+          if (ruasDisponiveis.length > 0 && ruasDisponiveis[0]?.id) {
+            setRuaSelecionada(ruasDisponiveis[0].id);
+          }
+        }, 1000);
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar dados iniciais",
+        });
+      }
+    }
+  }, [idCd, ruasDisponiveis, toast]);
+
+    const getEmpresas = async () => {
+      const apiResponse = await EmpresaService.getEmpresas();
+  
+      if (apiResponse.ok) {
+        setEmpresas(apiResponse.data as Empresa[]);
+      } else {
+        toast({
+          title: "Erro",
+          description: apiResponse.error.message,
+        });
+      }
+    };
+
+
+  useEffect(() => {
+    if (idCd) {
+      carregarDadosIniciais();
+    }
+  }, [idCd, carregarDadosIniciais]);
+
+  useEffect(() => {
+    getEmpresas();
+  }, []);
+
   useEffect(() => {
     getCds();
-  }, []);
+  }, [empresaSelecionada]);
 
   useEffect(() => {
     getRuas();
@@ -414,7 +484,7 @@ const VisualizacaoGrid = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-blue-600" />
-            Visualização em Grid - Inventário por Paletes
+            Inventário
           </CardTitle>
           <CardDescription>
             Visualize todas as posições de paletes de cada rua com status de
@@ -425,10 +495,36 @@ const VisualizacaoGrid = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="space-y-2">
               <label className="text-sm font-medium">
+                Empresa
+              </label>
+              <Select
+                value={empresaSelecionada}
+                onValueChange={(value) => {
+                  setEmpresaSelecionada(value);
+                  setCdSelecionado("");
+                  setRuaSelecionada("");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a empresa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {empresas.map((cd) => (
+                    <SelectItem key={cd.id} value={cd.id}>
+                      {cd.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+       
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
                 Centro de Distribuição
               </label>
               <Select
                 value={cdSelecionado}
+                disabled={!empresaSelecionada}
                 onValueChange={(value) => {
                   setCdSelecionado(value);
                   setRuaSelecionada("");
@@ -463,6 +559,48 @@ const VisualizacaoGrid = () => {
                       {rua.nome_rua}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Lado da Rua</Label>
+              <Select
+                value={ladoRua}
+                onValueChange={(value) => {
+                  setLadoRua(value);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o lado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem key="Esquerdo" value="0">
+                    Esquerdo
+                  </SelectItem>
+                  <SelectItem key="Direito" value="1">
+                    Direito
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select
+                value={statusSelecionado}
+                onValueChange={(value) => {
+                  setStatusSelecionado(value);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem key="Em Andamento" value="1">
+                    Em Andamento
+                  </SelectItem>
+                  <SelectItem key="Finalizado" value="2">
+                    Finalizado
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>

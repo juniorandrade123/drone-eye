@@ -15,13 +15,28 @@ import {
   AlertTriangle,
   Camera,
   MapPin,
-  Settings,
   TrendingDown,
+  Eye,
+  CheckCircle,
+  Trash,
 } from "lucide-react";
 import { DashboardService } from "@/api/services";
-import React from "react";
+import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { CentroDistribuicaoCard, InventarioCard, AlertaCard } from "@/types/dashboard-models";
+import {
+  CentroDistribuicaoCard,
+  InventarioCard,
+  AlertaCard,
+} from "@/types/dashboard-models";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "./ui/label";
+import { on } from "events";
 
 interface DashboardProps {
   onEditCD?: (cdNome: string) => void;
@@ -62,6 +77,9 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
       porcentagem: null,
     },
   ]);
+  const REFRESH_INTERVAL_MS = 2 * 60 * 1000;
+
+  const [statusSelecionado, setStatusSelecionado] = useState("");
 
   const [ultimosInventarios, setUltimosInventarios] = React.useState([]);
 
@@ -170,12 +188,47 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
     }
   };
 
-  React.useEffect(() => {
+  const handleView = (id: string) => {
+    onEditCD(id);
+  };
+
+  const handleFinalizar = (id: string) => {
+    toast({
+      title: "Sucesso",
+      description: "Item finalizado com sucesso.",
+    });
+  };
+
+  const handleRemover = (id: string) => {
+    toast({
+      title: "Sucesso",
+      description: "Item removido com sucesso.",
+    });
+    setCdsAtivos((prev) => prev.filter((cd) => cd.id !== id));
+  };
+
+  const refresh = () => {
     getCards();
     getCds();
     getUltimosInventarios();
     getAlertas();
-  }, []);
+  };
+
+  React.useEffect(() => {
+    refresh();
+  }, [statusSelecionado]);
+
+  React.useEffect(() => {
+    if (statusSelecionado === "1") {
+      const interval = setInterval(() => {
+        getCards();
+        getCds();
+        getUltimosInventarios();
+        getAlertas();
+      }, REFRESH_INTERVAL_MS);
+      return () => clearInterval(interval);
+    }
+  }, [statusSelecionado]);
 
   return (
     <div className="space-y-6">
@@ -227,9 +280,31 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
       {/* Status dos CDs */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Warehouse className="h-5 w-5 text-blue-600" />
-            Status dos Centros de Distribuição
+          <CardTitle className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Warehouse className="h-5 w-5 text-blue-600" />
+              Status dos Centros de Distribuição
+            </div>
+            <div className="w-40 flex-shrink-0">
+              <Select
+                value={statusSelecionado}
+                onValueChange={(value) => {
+                  setStatusSelecionado(value);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem key="Em Andamento" value="1">
+                    Em Andamento
+                  </SelectItem>
+                  <SelectItem key="Finalizado" value="2">
+                    Finalizado
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardTitle>
           <CardDescription>
             Monitoramento em tempo real da ocupação e atividade dos CDs
@@ -281,11 +356,31 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onEditCD?.(cd.id)}
-                    className="flex items-center gap-2"
+                    onClick={() => handleView(cd.id)}
+                    className="flex items-center gap-1"
                   >
-                    <Settings className="h-4 w-4" />
-                    Editar
+                    <Eye className="h-4 w-4" />
+                    Visualizar
+                  </Button>
+
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => handleFinalizar(cd.id)}
+                    className="flex items-center gap-1"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    Finalizar
+                  </Button>
+
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => handleRemover(cd.id)}
+                    className="flex items-center gap-1"
+                  >
+                    <Trash className="h-4 w-4" />
+                    Remover
                   </Button>
                 </div>
               </div>

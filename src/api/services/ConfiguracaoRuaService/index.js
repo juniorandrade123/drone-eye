@@ -3,11 +3,13 @@ import { buscaEmpresaId } from "../../config/auth";
 
 const authEndpoint = "ruas/config";
 
-export async function listarRuas(id_cd, incluir_inativas) {
+export async function listarRuas(id_cd, incluir_inativas, id_empresa) {
   const params = new URLSearchParams();
-  const empresaId = buscaEmpresaId();
+  let empresaId = buscaEmpresaId();
 
   if (incluir_inativas) params.append("incluir_inativas", incluir_inativas);
+
+  if(id_empresa) empresaId = id_empresa;
 
   const response = await Api.get(
     `/empresas/${empresaId}/cds/${id_cd}/${authEndpoint}?${params.toString()}`

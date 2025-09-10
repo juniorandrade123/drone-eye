@@ -21,7 +21,8 @@ import { Pencil, Trash2, Users, Shield, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { UsuarioService } from "@/api/services";
 import moment from "moment";
-import { buscaEmpresaId } from "@/api/config/auth";
+import { EmpresaService } from "@/api/services";
+import { Empresa } from "./CadastroEmpresa";
 
 interface Usuario {
   id: string;
@@ -30,6 +31,7 @@ interface Usuario {
   perfil: "administrador" | "logistica";
   dataCriacao: string;
   status: boolean;
+  id_empresa: string;
 }
 
 const CadastroUsuarios = () => {
@@ -39,13 +41,17 @@ const CadastroUsuarios = () => {
     email: "",
     senha: "",
     perfil: "" as "administrador" | "logistica" | "",
+    empresa: "",
   });
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const { toast } = useToast();
+  const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [senhaError, setSenhaError] = useState<string>("");
 
   useEffect(() => {
     getUsers();
+    getEmpresas();
   }, []);
 
   const getUsers = async () => {
@@ -58,6 +64,7 @@ const CadastroUsuarios = () => {
           email: u.email,
           dataCriacao: u.criado_em,
           status: u.ativo,
+          id_empresa: u.id_empresa,
         } as Usuario;
       });
       setUsuarios(users);
@@ -81,6 +88,17 @@ const CadastroUsuarios = () => {
       return;
     }
 
+    // Validação da senha
+    if (!editingId) {
+      const senhaValida = isSenhaValida(formData.senha);
+      if (senhaValida !== true) {
+        setSenhaError(senhaValida);
+        return;
+      } else {
+        setSenhaError("");
+      }
+    }
+
     if (editingId) {
       editUser();
     } else {
@@ -89,13 +107,12 @@ const CadastroUsuarios = () => {
   };
 
   const createUser = async () => {
-    const empresaId = buscaEmpresaId();
-
     const apiResponse = await UsuarioService.createUser({
       nome: formData.nome,
       email: formData.email,
       senha: formData.senha,
-      empresa_id: empresaId,
+      id_empresa: formData.empresa,
+      ativo: true,
     });
 
     if (apiResponse.ok) {
@@ -104,7 +121,7 @@ const CadastroUsuarios = () => {
         description: "Usuário criado com sucesso",
       });
       getUsers();
-      setFormData({ nome: "", email: "", senha: "", perfil: "" });
+      setFormData({ nome: "", email: "", senha: "", perfil: "", empresa: "" });
     } else {
       toast({
         title: "Erro",
@@ -125,7 +142,7 @@ const CadastroUsuarios = () => {
         description: "Usuário atualizado com sucesso",
       });
       getUsers();
-      setFormData({ nome: "", email: "", senha: "", perfil: "" });
+      setFormData({ nome: "", email: "", senha: "", perfil: "", empresa: "" });
       setEditingId(null);
     } else {
       toast({
@@ -141,8 +158,10 @@ const CadastroUsuarios = () => {
       email: usuario.email,
       senha: "",
       perfil: usuario.perfil || "logistica",
+      empresa: usuario.id_empresa,
     });
     setEditingId(usuario.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDelete = async (id: string) => {
@@ -184,8 +203,9 @@ const CadastroUsuarios = () => {
   };
 
   const cancelEdit = () => {
-    setEditingId(null);
-    setFormData({ nome: "", email: "", senha: "", perfil: "" });
+  setEditingId(null);
+  setFormData({ nome: "", email: "", senha: "", perfil: "", empresa: "" });
+  setSenhaError("");
   };
 
   const getPerfilIcon = (perfil: string) => {
@@ -196,6 +216,36 @@ const CadastroUsuarios = () => {
     return perfil === "administrador"
       ? "bg-red-100 text-red-800"
       : "bg-blue-100 text-blue-800";
+  };
+
+  const getEmpresas = async () => {
+    const apiResponse = await EmpresaService.getEmpresas();
+
+    if (apiResponse.ok) {
+      const empresasData = apiResponse.data as Empresa[];
+      empresasData.forEach((empresa: Empresa) => {
+        empresa.criado_em = moment(empresa.criado_em).format("YYYY-MM-DD");
+      });
+      setEmpresas(empresasData);
+    } else {
+      toast({
+        title: "Erro",
+        description: apiResponse.error.message,
+      });
+    }
+  };
+
+  const isSenhaValida = (senha: string) => {
+    if (senha.length < 8) {
+      return "A senha deve ter pelo menos 8 caracteres.";
+    }
+    if (!/[a-zA-Z]/.test(senha)) {
+      return "A senha deve conter pelo menos uma letra.";
+    }
+    if (!/\d/.test(senha)) {
+      return "A senha deve conter pelo menos um número.";
+    }
+    return true;
   };
 
   return (
@@ -252,12 +302,49 @@ const CadastroUsuarios = () => {
                   type="password"
                   placeholder="Digite a senha"
                   value={formData.senha}
-                  onChange={(e) =>
-                    setFormData({ ...formData, senha: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, senha: e.target.value });
+                  }}
+                  onBlur={(e) => {
+                    if (!editingId) {
+                      const senhaValida = isSenhaValida(e.target.value);
+                      if (senhaValida !== true) {
+                        setSenhaError(senhaValida);
+                      } else {
+                        setSenhaError("");
+                      }
+                    }
+                  }}
                   required={!editingId}
                 />
+                {senhaError && (
+                  <span className="text-red-600 text-sm mt-1 block">{senhaError}</span>
+                )}
               </div>
+              <div>
+                <Label htmlFor="empresa">Empresa</Label>
+                <Select
+                  value={formData.empresa}
+                  onValueChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      empresa: value as "empresa1" | "empresa2",
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a empresa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {empresas.map((empresa) => (
+                      <SelectItem key={empresa.id} value={empresa.id}>
+                        {empresa.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div>
                 <Label htmlFor="perfil">Perfil de Usuário</Label>
                 <Select
@@ -316,11 +403,7 @@ const CadastroUsuarios = () => {
                         <PerfilIcon className="h-3 w-3 mr-1" />
                         {usuario.perfil}
                       </Badge>
-                      <Badge
-                        variant={
-                          usuario.status ? "default" : "secondary"
-                        }
-                      >
+                      <Badge variant={usuario.status ? "default" : "secondary"}>
                         {usuario.status ? "ativo" : "inativo"}
                       </Badge>
                     </div>

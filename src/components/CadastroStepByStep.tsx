@@ -64,6 +64,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
     paletePorPosicao: 4,
     etiquetaPosicao: "",
     etiquetaPalete: "",
+    ladoRua: '',
   });
 
   const [tiposArmazenagem, setTiposArmazenagem] = useState<
@@ -72,9 +73,36 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
 
   const [idCd, setIdCd] = useState<string | undefined>(idCdProp?.idCd);
 
-  const estados = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+  const estados = [
+    "AC",
+    "AL",
+    "AP",
+    "AM",
+    "BA",
+    "CE",
+    "DF",
+    "ES",
+    "GO",
+    "MA",
+    "MT",
+    "MS",
+    "MG",
+    "PA",
+    "PB",
+    "PR",
+    "PE",
+    "PI",
+    "RJ",
+    "RN",
+    "RS",
+    "RO",
+    "RR",
+    "SC",
+    "SP",
+    "SE",
+    "TO",
+  ];
 
-  
   const carregarDadosIniciais = useCallback(async () => {
     if (idCd) {
       try {
@@ -473,6 +501,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
                     setFormData({ ...formData, cep: e.target.value })
                   }
                   placeholder="00000-000"
+                  maskType="cep"
                 />
               </div>
               <div className="space-y-2">
@@ -523,6 +552,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
                     setFormData({ ...formData, codigo: e.target.value })
                   }
                   placeholder="Código do CD"
+                  onlyNumber
                 />
               </div>
               <div className="space-y-2">
@@ -565,6 +595,7 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
                     setFormData({ ...formData, telefone: e.target.value })
                   }
                   placeholder="(11) 99999-9999"
+                  maskType="telefone"
                 />
               </div>
             </div>
@@ -597,13 +628,29 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label>Lado da Rua</Label>
+                  <Select
+                    value={ruaAtual.ladoRua}
+                    onValueChange={(value) => {
+                      setRuaAtual({ ...ruaAtual, ladoRua: value });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o lado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem key="Esquerdo" value="0">Esquerdo</SelectItem>
+                      <SelectItem key="Direito" value="1">Direito</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <Label>Tipo de Armazenagem</Label>
                   <Select
                     value={ruaAtual.tipoArmazenagem}
-                    onValueChange={(value) =>{
-                      setRuaAtual({ ...ruaAtual, tipoArmazenagem: value })
-                    }
-                    }
+                    onValueChange={(value) => {
+                      setRuaAtual({ ...ruaAtual, tipoArmazenagem: value });
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o tipo" />
@@ -620,7 +667,6 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
                 <div className="space-y-2">
                   <Label>Total de Posições</Label>
                   <Input
-                    type="number"
                     value={ruaAtual.totalPosicoes}
                     onChange={(e) =>
                       setRuaAtual({
@@ -629,28 +675,23 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
                       })
                     }
                     placeholder="Ex: 10"
+                    onlyNumber
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Paletes por Posição</Label>
-                  <Select
-                    value={ruaAtual.paletePorPosicao.toString()}
-                    onValueChange={(value) =>
+                  <Input
+                    min={1}
+                    value={ruaAtual.paletePorPosicao}
+                    onChange={(e) =>
                       setRuaAtual({
                         ...ruaAtual,
-                        paletePorPosicao: parseInt(value),
+                        paletePorPosicao: parseInt(e.target.value) || 0,
                       })
                     }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="4">4 paletes</SelectItem>
-                      <SelectItem value="6">6 paletes</SelectItem>
-                      <SelectItem value="9">9 paletes</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    placeholder="Ex: 4"
+                    onlyNumber
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Etiqueta da Posição</Label>
@@ -726,8 +767,11 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
                         <div className="flex items-center gap-4">
                           <Badge variant="outline">{rua.nome}</Badge>
                           <span className="text-sm text-gray-600">
-                            {tiposArmazenagem.find((t) => t.value === rua.tipoArmazenagem)?.key || rua.tipoArmazenagem}• {rua.totalPosicoes} posições
-                            • {rua.paletePorPosicao} paletes/posição
+                            {tiposArmazenagem.find(
+                              (t) => t.value === rua.tipoArmazenagem
+                            )?.key || rua.tipoArmazenagem}
+                            • {rua.totalPosicoes} posições •{" "}
+                            {rua.paletePorPosicao} paletes/posição
                           </span>
                         </div>
                         <div className="flex items-center gap-4 text-xs text-gray-500">
@@ -817,7 +861,9 @@ const CadastroStepByStep = ({ idCd: idCdProp }) => {
                     <div className="flex items-center gap-2 mb-1">
                       <Badge>{rua.nome}</Badge>
                       <span className="text-sm font-medium">
-                       {tiposArmazenagem.find((t) => t.value === rua.tipoArmazenagem)?.key || rua.tipoArmazenagem} 
+                        {tiposArmazenagem.find(
+                          (t) => t.value === rua.tipoArmazenagem
+                        )?.key || rua.tipoArmazenagem}
                       </span>
                     </div>
                     <div className="text-sm text-gray-600 mb-1">

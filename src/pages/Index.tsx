@@ -25,8 +25,7 @@ const Index = () => {
   const navigate = useNavigate();
 
   const handleEditCD = (cdId: string) => {
-    setActiveTab("cadastros");
-    setActiveCadastroTab("cd");
+    setActiveTab("inventario");
     setCdId(cdId);
   };
 
@@ -43,8 +42,8 @@ const Index = () => {
         return renderCadastroContent();
       case "consulta":
         return <ConsultaInventario />;
-      case "visualizacao":
-        return <VisualizacaoGrid />;
+      case "inventario":
+        return <VisualizacaoGrid idCd={cdId} />;
       case "exportacao":
         return <ExportacaoDados />;
       case "admin":

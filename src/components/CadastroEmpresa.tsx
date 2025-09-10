@@ -15,8 +15,9 @@ import { useToast } from "@/hooks/use-toast";
 import { EmpresaService } from "@/api/services";
 import { useEffect } from "react";
 import moment from "moment";
+import { isValidCNPJ } from "@/lib/utils";
 
-interface Empresa {
+export interface Empresa {
   id: string;
   nome: string;
   cnpj: string;
@@ -41,12 +42,22 @@ const CadastroEmpresa = () => {
   const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
+
     e.preventDefault();
 
-    if (!formData.nome || !formData.razao || !formData.cnpj) {
+    if (!formData.nome || !formData.razao || !formData.cnpj || !formData.email || !formData.telefone) {
       toast({
         title: "Erro",
         description: "Todos os campos são obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!isValidCNPJ(formData.cnpj)) {
+      toast({
+        title: "Erro",
+        description: "CNPJ inválido",
         variant: "destructive",
       });
       return;
@@ -68,17 +79,19 @@ const CadastroEmpresa = () => {
       telefone: empresa.telefone,
     });
     setEditingId(empresa.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
   };
 
   const handleDelete = async (id: string) => {
     const apiResponse = await EmpresaService.deleteEmpresa(id);
 
     if (apiResponse.ok) {
+      getEmpresas();
       toast({
         title: "Sucesso",
         description: "Empresa removida com sucesso",
       });
-      getEmpresas();
     } else {
       toast({
         title: "Erro",
@@ -153,6 +166,7 @@ const CadastroEmpresa = () => {
       });
       getEmpresas();
       setFormData({ nome: "", razao: "", cnpj: "", email: "", telefone: "" });
+      setEditingId(null);
     } else {
       toast({
         title: "Erro",
@@ -184,7 +198,7 @@ const CadastroEmpresa = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="nome">Nome da Empresa</Label>
+                <Label htmlFor="nome">Nome da Empresa *</Label>
                 <Input
                   id="nome"
                   type="text"
@@ -197,7 +211,7 @@ const CadastroEmpresa = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="razao">Razão Social</Label>
+                <Label htmlFor="razao">Razão Social *</Label>
                 <Input
                   id="razao"
                   type="text"
@@ -212,7 +226,7 @@ const CadastroEmpresa = () => {
             </div>
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="telefone">Telefone</Label>
+                <Label htmlFor="telefone">Telefone *</Label>
                 <Input
                   id="telefone"
                   type="text"
@@ -221,11 +235,12 @@ const CadastroEmpresa = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, telefone: e.target.value })
                   }
+                  maskType="telefone"
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email *</Label>
                 <Input
                   id="email"
                   type="email"
@@ -239,7 +254,7 @@ const CadastroEmpresa = () => {
               </div>
             </div>
             <div>
-              <Label htmlFor="cnpj">CNPJ</Label>
+              <Label htmlFor="cnpj">CNPJ *</Label>
               <Input
                 id="cnpj"
                 type="text"
@@ -249,6 +264,7 @@ const CadastroEmpresa = () => {
                   setFormData({ ...formData, cnpj: e.target.value })
                 }
                 required
+                maskType="cnpj"
               />
             </div>
 
