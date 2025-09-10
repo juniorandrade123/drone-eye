@@ -101,13 +101,6 @@ const VisualizacaoGrid = () => {
 
   const [dadosInventario, setDadosInventario] = useState<DadosInventario>({});
 
-  const imagesMock = [
-    "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=400",
-    "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
-    "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400",
-    "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400",
-  ];
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "lido":
@@ -194,7 +187,18 @@ const VisualizacaoGrid = () => {
   ) => {
     if (palete.status === "vazio") return;
 
-    gerarLink(palete.linkFoto);
+    (async () => {
+      const link = await gerarLink(palete.linkFoto);
+      setImagemSelecionada({
+        url: link || palete.foto || "",
+        status: palete.status,
+        palete: palete.id,
+      });
+      setCodigoManualModal("");
+      setModalAberto(true);
+      console.log("Link da imagem gerado:", imagemSelecionada);
+    })();
+
     // Se foi clique com Ctrl/Cmd, abrir modal de edição
     // if (event?.ctrlKey || event?.metaKey) {
     //   setPaleteParaEdicao(palete);
@@ -202,14 +206,6 @@ const VisualizacaoGrid = () => {
     //   return;
     // }
 
-    setImagemSelecionada({
-      url: palete.foto,
-      status: palete.status,
-      palete: palete.id,
-    });
-
-    setCodigoManualModal("");
-    setModalAberto(true);
   };
 
   const handleSalvarEdicaoManual = (paleteId: string, sku: string) => {
@@ -344,10 +340,7 @@ const VisualizacaoGrid = () => {
 
   const popularDadosInventario = (relatorios: RelatorioFinal[]) => {
     const posicoesMap: {
-      [
-        posicao: string
-      ]: PosicaoInventario;
-
+      [posicao: string]: PosicaoInventario;
     } = {};
     relatorios.forEach((rel) => {
       if (!posicoesMap[rel.codigo_posicao]) {
@@ -360,8 +353,8 @@ const VisualizacaoGrid = () => {
       posicoesMap[rel.codigo_posicao].paletes.push({
         id: rel.codigo_palete,
         status: "lido",
-        sku: null, // Não vem do backend
-        foto: imagesMock[Math.floor(Math.random() * imagesMock.length)],
+        sku: null,
+        foto: rel.imagem_palete,
         linkFoto: rel.imagem_palete,
       });
     });
@@ -381,9 +374,10 @@ const VisualizacaoGrid = () => {
     });
   };
 
-  const gerarLink = async (nomeImagem: string) => {
+  const gerarLink = async (nomeImagem: string): Promise<string> => {
     if (!nomeImagem) {
       setLinkFoto("");
+      return "";
     }
     const payload = {
       id_cd: cdSelecionado,
@@ -395,8 +389,10 @@ const VisualizacaoGrid = () => {
 
     if (apiResponse.ok) {
       setLinkFoto(apiResponse.data.imagens[0].url);
+      return apiResponse.data.imagens[0].url;
     } else {
       setLinkFoto("");
+      return "";
     }
   };
 
@@ -754,9 +750,8 @@ const VisualizacaoGrid = () => {
                   alt={`Foto do código de barras - ${imagemSelecionada.palete}`}
                   className="w-full h-auto max-h-98 object-contain bg-gray-50"
                 />
-
                 {linkFoto && (
-                    <div className="flex justify-center mt-4">
+                  <div className="flex justify-center mt-4">
                     <a
                       href={linkFoto}
                       className="text-blue-600 hover:underline align-middle"
@@ -765,7 +760,7 @@ const VisualizacaoGrid = () => {
                     >
                       Ver foto do código de barras
                     </a>
-                    </div>
+                  </div>
                 )}
                 {!linkFoto && (
                   <span>Código de barras não foi identificado</span>
