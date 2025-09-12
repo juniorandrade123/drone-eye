@@ -77,7 +77,8 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
       porcentagem: null,
     },
   ]);
-  const REFRESH_INTERVAL_MS = 2 * 60 * 1000;
+  
+  const REFRESH_INTERVAL_MS = 1 * 60 * 1000; // 1 minuto
 
   const [statusSelecionado, setStatusSelecionado] = useState("");
 
