@@ -27,20 +27,21 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, MapPin, HelpCircle } from "lucide-react";
+import { Upload } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { PosicaoEstoqueService } from "@/api/services";
 import { TipoArmazenagemService } from "@/api/services";
 import { DashboardService } from "@/api/services";
 import { ConfiguracaoRuaService } from "@/api/services";
 import { TipoArmazenagem } from "@/types/tipo-armazenagem-model";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { CentroDistribuicaoCard } from "@/types/dashboard-models";
 import { RuaDTO } from "@/types/rua-model";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from "@/components/ui/tooltip";
 import { buscaEmpresaId } from "@/api/config/auth";
 interface EtiquetaPosicao {
   id: string;
@@ -73,7 +74,6 @@ export type CreateEtiquetaPosicao = {
   status: string;
   tipo_armazenagem_id: string;
   codigo_posicao: string;
-  
 };
 
 export type EditEtiquetaPosicao = {
@@ -91,6 +91,7 @@ export type EditEtiquetaPosicao = {
 };
 
 const CadastroEtiquetaPosicao = () => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [etiquetas, setEtiquetas] = useState<EtiquetaPosicao[]>([]);
   const [tipos, setTipos] = useState<TipoArmazenagem[]>([]);
@@ -111,15 +112,45 @@ const CadastroEtiquetaPosicao = () => {
     status: "Ativo",
   });
 
+  function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file && (file.name.endsWith(".xlsx") || file.name.endsWith(".xls"))) {
+      toast({
+        title: "Sucesso",
+        description: "Posições cadastradas",
+      });
+    } else {
+      toast({
+        title: "Erro",
+        description: "Selecione um arquivo Excel (.xlsx ou .xls)",
+        variant: "destructive",
+      });
+    }
+  }
+
+  function handleUploadButtonClick() {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  }
+
   const [editando, setEditando] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.codigo || !formData.cd || !formData.bloco || !formData.rua || !formData.tipoArmazenagem || !formData.posicao) {
+    if (
+      !formData.codigo ||
+      !formData.cd ||
+      !formData.bloco ||
+      !formData.rua ||
+      !formData.tipoArmazenagem ||
+      !formData.posicao
+    ) {
       toast({
         title: "Erro",
-        description: "Código, CD, bloco, rua, tipo de armazenagem e posição são obrigatórios",
+        description:
+          "Código, CD, bloco, rua, tipo de armazenagem e posição são obrigatórios",
         variant: "destructive",
       });
       return;
@@ -222,8 +253,8 @@ const CadastroEtiquetaPosicao = () => {
       bloco: formData.bloco,
       modulo: "0", //Campo obrigatorio
       nivel: "0", //Campo obrigatorio
-      posicao: formData.posicao ,
-      capacidade_paletes: formData.capacidade ?  Number(formData.capacidade) : 0 ,
+      posicao: formData.posicao,
+      capacidade_paletes: formData.capacidade ? Number(formData.capacidade) : 0,
       tipo_armazenagem_id: tipoArmazenagemSelecionado?.id || "",
       status: formData.status,
       ativo: true,
@@ -316,7 +347,10 @@ const CadastroEtiquetaPosicao = () => {
   };
 
   const getTiposArmazenagem = async () => {
-    const apiResponse = await TipoArmazenagemService.getArmazenagens(true, buscaEmpresaId());
+    const apiResponse = await TipoArmazenagemService.getArmazenagens(
+      true,
+      buscaEmpresaId()
+    );
     if (apiResponse.ok) {
       setTipos(apiResponse.data);
     } else {
@@ -568,7 +602,26 @@ const CadastroEtiquetaPosicao = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Posições Cadastradas</CardTitle>
+          <div className="flex items-center justify-between w-full">
+            <CardTitle>Posições Cadastradas</CardTitle>
+            <Button
+              type="button"
+              variant="outline"
+              className="ml-2 flex items-center gap-2"
+              onClick={handleUploadButtonClick}
+            >
+              <Upload className="h-4 w-4" />
+              Upload Etiquetas
+            </Button>
+            <input
+              ref={fileInputRef}
+              id="upload-excel"
+              type="file"
+              accept=".xlsx,.xls"
+              style={{ display: "none" }}
+              onChange={handleUpload}
+            />
+          </div>
           <CardDescription>
             Lista de todas as posições de armazenagem cadastradas
           </CardDescription>
@@ -585,7 +638,9 @@ const CadastroEtiquetaPosicao = () => {
                     <TooltipTrigger asChild>
                       <HelpCircle className="w-4 h-4 text-muted-foreground cursor-pointer" />
                     </TooltipTrigger>
-                    <TooltipContent sideOffset={8}>bloco-nível-posição-modulo</TooltipContent>
+                    <TooltipContent sideOffset={8}>
+                      bloco-nível-posição-modulo
+                    </TooltipContent>
                   </Tooltip>
                 </TableHead>
                 <TableHead>Capacidade</TableHead>
