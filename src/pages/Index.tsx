@@ -17,7 +17,7 @@ import ConsultaInventario from "@/components/ConsultaInventario";
 import VisualizacaoGrid from "@/components/VisualizacaoGrid";
 import ExportacaoDados from "@/components/ExportacaoDados";
 import { AppSidebar } from "@/components/AppSidebar";
-import { logout } from "@/api/config/auth";
+import { buscaUsuarioNome, logout } from "@/api/config/auth";
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [activeCadastroTab, setActiveCadastroTab] = useState("empresa");
@@ -109,6 +109,8 @@ const Index = () => {
               
               <div className="flex items-center gap-4">
                 <div className="flex gap-2">
+                  <span>{buscaUsuarioNome()}</span>
+
                   <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                     <Camera className="h-3 w-3 mr-1" />
                     IA + OpenCV
