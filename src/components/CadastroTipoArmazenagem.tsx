@@ -33,6 +33,7 @@ import { TipoArmazenagemService } from "@/api/services";
 import { CategoriaArmazenagemService } from "@/api/services";
 import { useEffect } from "react";
 import { TipoArmazenagem } from "@/types/tipo-armazenagem-model";
+import { buscaEmpresaId } from "@/api/config/auth";
 
 const CadastroTipoArmazenagem = () => {
   const { toast } = useToast();
@@ -155,7 +156,7 @@ const CadastroTipoArmazenagem = () => {
   };
 
   const getTiposArmazenagem = async () => {
-    const apiResponse = await TipoArmazenagemService.getArmazenagens();
+    const apiResponse = await TipoArmazenagemService.getArmazenagens(true, buscaEmpresaId());
     if (apiResponse.ok) {
       setTipos(apiResponse.data);
     } else {

@@ -41,6 +41,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { buscaEmpresaId } from "@/api/config/auth";
 interface EtiquetaPosicao {
   id: string;
   codigo: string;
@@ -315,7 +316,7 @@ const CadastroEtiquetaPosicao = () => {
   };
 
   const getTiposArmazenagem = async () => {
-    const apiResponse = await TipoArmazenagemService.getArmazenagens();
+    const apiResponse = await TipoArmazenagemService.getArmazenagens(true, buscaEmpresaId());
     if (apiResponse.ok) {
       setTipos(apiResponse.data);
     } else {
