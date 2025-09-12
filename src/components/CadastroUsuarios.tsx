@@ -239,11 +239,17 @@ const CadastroUsuarios = () => {
     if (senha.length < 8) {
       return "A senha deve ter pelo menos 8 caracteres.";
     }
-    if (!/[a-zA-Z]/.test(senha)) {
-      return "A senha deve conter pelo menos uma letra.";
+    if (!/[A-Z]/.test(senha)) {
+      return "A senha deve conter pelo menos uma letra maiúscula.";
+    }
+    if (!/[a-z]/.test(senha)) {
+      return "A senha deve conter pelo menos uma letra minúscula.";
     }
     if (!/\d/.test(senha)) {
       return "A senha deve conter pelo menos um número.";
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>_\-+=~`[\]\\\/]/.test(senha)) {
+      return "A senha deve conter pelo menos um caractere especial.";
     }
     return true;
   };
