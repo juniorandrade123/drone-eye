@@ -6,6 +6,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+interface CadastroUsuariosProps {
+  perfilId?: string;
+}
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -35,7 +38,7 @@ interface Usuario {
   id_empresa: string;
 }
 
-const CadastroUsuarios = () => {
+const CadastroUsuarios = ({ perfilId }: CadastroUsuariosProps) => {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [formData, setFormData] = useState({
     nome: "",
@@ -266,6 +269,15 @@ const CadastroUsuarios = () => {
   useEffect(() => {
     getUsers();
   }, [filter]);
+
+  useEffect(() => {
+    if (perfilId && usuarios.length > 0) {
+      const usuario = usuarios.find(u => u.id === perfilId && u.id_empresa === filter.id_empresa);
+      if (usuario) {
+        handleEdit(usuario);
+      }
+    }
+  }, [perfilId, usuarios, filter.id_empresa]);
 
   return (
     <div className="space-y-6">
