@@ -35,9 +35,22 @@ import { useEffect } from "react";
 import { TipoArmazenagem } from "@/types/tipo-armazenagem-model";
 import { buscaEmpresaId } from "@/api/config/auth";
 
+import { EmpresaService } from "@/api/services";
+import { Empresa } from "./CadastroEmpresa";
+
 const CadastroTipoArmazenagem = () => {
   const { toast } = useToast();
   const [tipos, setTipos] = useState<TipoArmazenagem[]>([]);
+  const [empresas, setEmpresas] = useState<Empresa[]>([]);
+
+  // Filtros
+
+  const [filter, setFilter] = useState({
+    codigo: "",
+    nome: "",
+    status: "",
+    id_empresa: buscaEmpresaId(),
+  });
 
   const [formData, setFormData] = useState({
     codigo: "",
@@ -51,6 +64,7 @@ const CadastroTipoArmazenagem = () => {
     requer_equipamento: false,
     equipamento_necessario: "",
     id_categoria: "",
+    id_empresa: "",
     ativo: true,
   });
 
@@ -70,10 +84,10 @@ const CadastroTipoArmazenagem = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.codigo || !formData.nome || !formData.id_categoria) {
+    if (!formData.codigo || !formData.nome || !formData.id_categoria || !formData.id_empresa) {
       toast({
         title: "Erro",
-        description: "Código, nome e categoria são obrigatórios",
+        description: "Empresa, código, nome e categoria são obrigatórios",
         variant: "destructive",
       });
       return;
@@ -92,7 +106,7 @@ const CadastroTipoArmazenagem = () => {
       requer_equipamento: formData.requer_equipamento,
       equipamento_necessario: formData.equipamento_necessario,
       id_categoria: formData.id_categoria,
-      id_empresa: "",
+      id_empresa: formData.id_empresa,
       ativo: formData.ativo,
       criado_em: editando
         ? tipos.find((t) => t.id === editando)?.criado_em || ""
@@ -117,6 +131,7 @@ const CadastroTipoArmazenagem = () => {
       requer_equipamento: false,
       equipamento_necessario: "",
       id_categoria: "",
+      id_empresa: "",
       ativo: true,
     });
   };
@@ -135,6 +150,7 @@ const CadastroTipoArmazenagem = () => {
       equipamento_necessario: tipo.equipamento_necessario,
       id_categoria: tipo.id_categoria,
       ativo: tipo.ativo,
+      id_empresa: tipo.id_empresa,
     });
     setEditando(tipo.id);
   };
@@ -156,7 +172,21 @@ const CadastroTipoArmazenagem = () => {
   };
 
   const getTiposArmazenagem = async () => {
-    const apiResponse = await TipoArmazenagemService.getArmazenagens(true, buscaEmpresaId());
+    let statusFilter: boolean | null;
+    if (filter.status === "Ativo") {
+      statusFilter = true;
+    } else if (filter.status === "Inativo") {
+      statusFilter = false;
+    } else {
+      statusFilter = null;
+    }
+
+    const apiResponse = await TipoArmazenagemService.getArmazenagens(
+      statusFilter,
+      filter.id_empresa,
+      filter.codigo,
+      filter.nome
+    );
     if (apiResponse.ok) {
       setTipos(apiResponse.data);
     } else {
@@ -217,10 +247,27 @@ const CadastroTipoArmazenagem = () => {
     }
   };
 
+  const getEmpresas = async () => {
+    const apiResponse = await EmpresaService.getEmpresas();
+
+    if (apiResponse.ok) {
+      setEmpresas(apiResponse.data);
+    } else {
+      toast({
+        title: "Erro",
+        description: apiResponse.error.message,
+      });
+    }
+  };
+
   useEffect(() => {
     getCategorias();
-    getTiposArmazenagem();
+    getEmpresas();
   }, []);
+
+  useEffect(() => {
+    getTiposArmazenagem();
+  }, [filter]);
 
   return (
     <div className="space-y-6">
@@ -238,6 +285,30 @@ const CadastroTipoArmazenagem = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
+                <Label htmlFor="empresa">Empresa *</Label>
+                <Select
+                  value={formData.id_empresa}
+                  onValueChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      id_empresa: value as string,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a empresa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {empresas.map((empresa) => (
+                      <SelectItem key={empresa.id} value={empresa.id}>
+                        {empresa.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
                 <Label htmlFor="codigo">Código *</Label>
                 <Input
                   id="codigo"
@@ -249,18 +320,19 @@ const CadastroTipoArmazenagem = () => {
                   required
                 />
               </div>
-              <div>
-                <Label htmlFor="nome">Nome *</Label>
-                <Input
-                  id="nome"
-                  value={formData.nome}
-                  onChange={(e) =>
-                    setFormData({ ...formData, nome: e.target.value })
-                  }
-                  placeholder="Porta Paletes"
-                  required
-                />
-              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="nome">Nome *</Label>
+              <Input
+                id="nome"
+                value={formData.nome}
+                onChange={(e) =>
+                  setFormData({ ...formData, nome: e.target.value })
+                }
+                placeholder="Porta Paletes"
+                required
+              />
             </div>
 
             <div>
@@ -440,75 +512,160 @@ const CadastroTipoArmazenagem = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Código</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Capacidade</TableHead>
-                <TableHead>Peso Máx.</TableHead>
-                <TableHead>Características</TableHead>
-                <TableHead>Ativo</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tipos.map((tipo) => (
-                <TableRow key={tipo.id}>
-                  <TableCell className="font-medium">{tipo.codigo}</TableCell>
-                  <TableCell>{tipo.nome}</TableCell>
-                  <TableCell>
-                    {getCategoriaNomeById(tipo.id_categoria)}
-                  </TableCell>
-                  <TableCell>{tipo.capacidade_max_paletes} paletes</TableCell>
-                  <TableCell>{tipo.peso_max_kg} kg</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1 flex-wrap">
-                      {tipo.permite_empilhamento && (
-                        <Badge variant="outline" className="text-xs">
-                          Empilha
-                        </Badge>
-                      )}
-                      {tipo.permite_rotacao && (
-                        <Badge variant="outline" className="text-xs">
-                          Rotação
-                        </Badge>
-                      )}
-                      {tipo.requer_equipamento && (
-                        <Badge variant="outline" className="text-xs">
-                          Equip.
-                        </Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={tipo.ativo ? "default" : "secondary"}>
-                      {tipo.ativo ? "Ativo" : "Inativo"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(tipo)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(tipo.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          {/* Filtros */}
+          <div className="mb-4 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+            <div>
+              <Label htmlFor="filtroEmpresa">Empresa *</Label>
+              <Select
+                value={filter.id_empresa}
+                onValueChange={(value) =>
+                  setFilter({ ...filter, id_empresa: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a empresa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {empresas.map((empresa) => (
+                    <SelectItem key={empresa.id} value={empresa.id}>
+                      {empresa.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="filtroCodigo">Código</Label>
+              <Input
+                id="filtroCodigo"
+                value={filter.codigo}
+                onChange={(e) =>
+                  setFilter({ ...filter, codigo: e.target.value })
+                }
+                placeholder="Digite o código..."
+              />
+            </div>
+            <div>
+              <Label htmlFor="filtroNome">Nome</Label>
+              <Input
+                id="filtroNome"
+                value={filter.nome}
+                onChange={(e) => setFilter({ ...filter, nome: e.target.value })}
+                placeholder="Digite o nome..."
+              />
+            </div>
+            <div>
+              <Label htmlFor="filtroStatus">Status</Label>
+              <Select
+                value={filter.status}
+                onValueChange={(value) =>
+                  setFilter({ ...filter, status: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Todos">Todos</SelectItem>
+                  <SelectItem value="Ativo">Ativo</SelectItem>
+                  <SelectItem value="Inativo">Inativo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full"
+                onClick={() =>
+                  setFilter({
+                    codigo: "",
+                    nome: "",
+                    status: "Todos",
+                    id_empresa: buscaEmpresaId(),
+                  })
+                }
+              >
+                Limpar filtros
+              </Button>
+            </div>
+          </div>
+
+          {tipos.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">
+              Nenhum tipo de armazenagem cadastrado para os filtros selecionados.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Código</TableHead>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Capacidade</TableHead>
+                  <TableHead>Peso Máx.</TableHead>
+                  <TableHead>Características</TableHead>
+                  <TableHead>Ativo</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {tipos.map((tipo) => (
+                  <TableRow key={tipo.id}>
+                    <TableCell className="font-medium">{tipo.codigo}</TableCell>
+                    <TableCell>{tipo.nome}</TableCell>
+                    <TableCell>
+                      {getCategoriaNomeById(tipo.id_categoria)}
+                    </TableCell>
+                    <TableCell>{tipo.capacidade_max_paletes} paletes</TableCell>
+                    <TableCell>{tipo.peso_max_kg} kg</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1 flex-wrap">
+                        {tipo.permite_empilhamento && (
+                          <Badge variant="outline" className="text-xs">
+                            Empilha
+                          </Badge>
+                        )}
+                        {tipo.permite_rotacao && (
+                          <Badge variant="outline" className="text-xs">
+                            Rotação
+                          </Badge>
+                        )}
+                        {tipo.requer_equipamento && (
+                          <Badge variant="outline" className="text-xs">
+                            Equip.
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={tipo.ativo ? "default" : "secondary"}>
+                        {tipo.ativo ? "Ativo" : "Inativo"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(tipo)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(tipo.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
