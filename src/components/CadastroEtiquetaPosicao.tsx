@@ -28,6 +28,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, MapPin, HelpCircle } from "lucide-react";
 import { Upload } from "lucide-react";
+import { EmpresaService } from "@/api/services";
 import { useToast } from "@/components/ui/use-toast";
 import { PosicaoEstoqueService } from "@/api/services";
 import { TipoArmazenagemService } from "@/api/services";
@@ -43,6 +44,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { buscaEmpresaId } from "@/api/config/auth";
+import { Empresa } from "./CadastroEmpresa";
 interface EtiquetaPosicao {
   id: string;
   codigo: string;
@@ -57,6 +59,7 @@ interface EtiquetaPosicao {
   tipoArmazenagem: string;
   status: string;
   dataRegistro: string;
+  id_empresa: string;
 }
 
 export type CreateEtiquetaPosicao = {
@@ -97,6 +100,7 @@ const CadastroEtiquetaPosicao = () => {
   const [tipos, setTipos] = useState<TipoArmazenagem[]>([]);
   const [cd, setCd] = useState<CentroDistribuicaoCard[]>([]);
   const [ruas, setRuas] = useState<RuaDTO[]>([]);
+  const [empresas, setEmpresas] = useState<Empresa[]>([]);
 
   const [formData, setFormData] = useState({
     codigo: "",
@@ -109,6 +113,7 @@ const CadastroEtiquetaPosicao = () => {
     posicao: "",
     capacidade: "",
     tipoArmazenagem: "",
+    id_empresa: buscaEmpresaId(),
     status: "Ativo",
   });
 
@@ -135,6 +140,12 @@ const CadastroEtiquetaPosicao = () => {
   }
 
   const [editando, setEditando] = useState<string | null>(null);
+
+  const [filter, setFilter] = useState({
+    codigo_rua: "",
+    status: "",
+    id_empresa: buscaEmpresaId(),
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,6 +189,7 @@ const CadastroEtiquetaPosicao = () => {
       capacidade: etiqueta.capacidade ? etiqueta.capacidade.toString() : "",
       tipoArmazenagem: getNomeTipoArmazenagem(etiqueta.tipoArmazenagem),
       status: etiqueta.status,
+      id_empresa: etiqueta.id_empresa,
     });
     setEditando(etiqueta.id);
 
@@ -194,7 +206,8 @@ const CadastroEtiquetaPosicao = () => {
   const handleDelete = async (etiqueta: EtiquetaPosicao) => {
     const apiReponse = await PosicaoEstoqueService.deletePosicao(
       etiqueta.id,
-      etiqueta.cd
+      etiqueta.cd,
+      filter.id_empresa
     );
 
     if (apiReponse.ok) {
@@ -212,7 +225,21 @@ const CadastroEtiquetaPosicao = () => {
   };
 
   const getEtiquetas = async () => {
-    const apiResponse = await PosicaoEstoqueService.getPosicoes();
+    let statusFilter: boolean | null;
+    if (filter.status === "Ativo") {
+      statusFilter = true;
+    } else if (filter.status === "Inativo") {
+      statusFilter = false;
+    } else {
+      statusFilter = null;
+    }
+
+    const apiResponse = await PosicaoEstoqueService.getPosicoes(
+      filter.id_empresa,
+      filter.codigo_rua,
+      statusFilter
+    );
+
     if (apiResponse.ok) {
       const mapped = apiResponse.data.map((item: any) => ({
         id: item.id,
@@ -228,6 +255,7 @@ const CadastroEtiquetaPosicao = () => {
         tipoArmazenagem: item.tipo_armazenagem_id,
         status: item.status,
         dataRegistro: item.criado_em,
+        id_empresa: item.id_empresa,
       }));
       setEtiquetas(mapped);
     } else {
@@ -246,7 +274,7 @@ const CadastroEtiquetaPosicao = () => {
     const ruaSelecionada = ruas.find((item) => item.nome_rua === formData.rua);
 
     const etiqueta: CreateEtiquetaPosicao = {
-      id_empresa: "",
+      id_empresa: formData.id_empresa,
       id_cd: cdSelecionado?.id_cd || "",
       id_rua: ruaSelecionada?.id || "",
       descricao: formData.descricao,
@@ -279,6 +307,7 @@ const CadastroEtiquetaPosicao = () => {
         capacidade: "",
         tipoArmazenagem: "",
         status: "Ativo",
+        id_empresa: buscaEmpresaId(),
       });
       getEtiquetas();
     } else {
@@ -337,6 +366,7 @@ const CadastroEtiquetaPosicao = () => {
         capacidade: "",
         tipoArmazenagem: "",
         status: "Ativo",
+        id_empresa: buscaEmpresaId(),
       });
     } else {
       toast({
@@ -349,10 +379,16 @@ const CadastroEtiquetaPosicao = () => {
   const getTiposArmazenagem = async () => {
     const apiResponse = await TipoArmazenagemService.getArmazenagens(
       true,
-      buscaEmpresaId()
+      formData.id_empresa
     );
     if (apiResponse.ok) {
       setTipos(apiResponse.data);
+      if (apiResponse.data.length === 0) {
+        toast({
+          title: "Atenção",
+          description: "Nenhum tipo de armazenagem encontrado.",
+        });
+      }
     } else {
       toast({
         title: "Erro",
@@ -362,10 +398,19 @@ const CadastroEtiquetaPosicao = () => {
   };
 
   const getCds = async () => {
-    const apiResponse = await DashboardService.getCdsStatus();
+    const apiResponse = await DashboardService.getCdsStatus(
+      formData.id_empresa
+    );
     if (apiResponse.ok) {
       const data = apiResponse.data.cds;
       setCd(data);
+
+      if (data.length === 0) {
+        toast({
+          title: "Atenção",
+          description: "Nenhum Centro de Distribuição nessa empresa.",
+        });
+      }
     } else {
       toast({
         title: "Erro",
@@ -378,15 +423,35 @@ const CadastroEtiquetaPosicao = () => {
     if (formData.cd === "") return;
     const cdSelecionado = cd.find((item) => item.nome === formData.cd);
     const apiResponse = await ConfiguracaoRuaService.listarRuas(
-      cdSelecionado.id_cd
+      cdSelecionado.id_cd,
+      true,
+      formData.id_empresa
     );
     if (apiResponse.ok) {
       const data = apiResponse.data;
       setRuas(data);
+      if (data.length === 0) {
+        toast({
+          title: "Atenção",
+          description: "Nenhuma Rua encontrada nesse Centro de Distribuição.",
+        });
+      }
     } else {
       toast({
         title: "Erro",
         description: "Erro ao carregar Ruas.",
+      });
+    }
+  };
+  const getEmpresas = async () => {
+    const apiResponse = await EmpresaService.getEmpresas();
+
+    if (apiResponse.ok) {
+      setEmpresas(apiResponse.data);
+    } else {
+      toast({
+        title: "Erro",
+        description: apiResponse.error.message,
       });
     }
   };
@@ -402,14 +467,22 @@ const CadastroEtiquetaPosicao = () => {
   };
 
   useEffect(() => {
-    getTiposArmazenagem();
-    getCds();
     getEtiquetas();
+    getEmpresas();
   }, []);
+
+  useEffect(() => {
+    getCds();
+    getTiposArmazenagem();
+  }, [formData.id_empresa]);
 
   useEffect(() => {
     getRuas();
   }, [formData.cd]);
+
+  useEffect(() => {
+    getEtiquetas();
+  }, [filter]);
 
   return (
     <div className="space-y-6">
@@ -426,6 +499,29 @@ const CadastroEtiquetaPosicao = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="empresa">Empresa *</Label>
+                <Select
+                  value={formData.id_empresa}
+                  onValueChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      id_empresa: value as string,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a empresa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {empresas.map((empresa) => (
+                      <SelectItem key={empresa.id} value={empresa.id}>
+                        {empresa.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label htmlFor="codigo">Código da Posição *</Label>
                 <Input
@@ -604,108 +700,182 @@ const CadastroEtiquetaPosicao = () => {
         <CardHeader>
           <div className="flex items-center justify-between w-full">
             <CardTitle>Posições Cadastradas</CardTitle>
-            <Button
-              type="button"
-              variant="outline"
-              className="ml-2 flex items-center gap-2"
-              onClick={handleUploadButtonClick}
-            >
-              <Upload className="h-4 w-4" />
-              Upload Etiquetas
-            </Button>
-            <input
-              ref={fileInputRef}
-              id="upload-excel"
-              type="file"
-              accept=".xlsx,.xls"
-              style={{ display: "none" }}
-              onChange={handleUpload}
-            />
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex items-center gap-2"
+                onClick={handleUploadButtonClick}
+              >
+                <Upload className="h-4 w-4" />
+                Upload Etiquetas
+              </Button>
+              <input
+                ref={fileInputRef}
+                id="upload-excel"
+                type="file"
+                accept=".xlsx,.xls"
+                style={{ display: "none" }}
+                onChange={handleUpload}
+              />
+            </div>
           </div>
           <CardDescription>
             Lista de todas as posições de armazenagem cadastradas
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Código</TableHead>
-                <TableHead>CD</TableHead>
-                <TableHead className="flex items-center gap-1">
-                  <span>Localização</span>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <HelpCircle className="w-4 h-4 text-muted-foreground cursor-pointer" />
-                    </TooltipTrigger>
-                    <TooltipContent sideOffset={8}>
-                      bloco-nível-posição-modulo
-                    </TooltipContent>
-                  </Tooltip>
-                </TableHead>
-                <TableHead>Capacidade</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {etiquetas.map((etiqueta) => (
-                <TableRow key={etiqueta.id}>
-                  <TableCell className="font-medium">
-                    {etiqueta.codigo}
-                  </TableCell>
-                  <TableCell>{getNomeCd(etiqueta.cd)}</TableCell>
-                  <TableCell>
-                    {etiqueta.bloco}-{etiqueta.rua}
-                    {etiqueta.modulo && `-${etiqueta.modulo}`}
-                    {etiqueta.nivel && `-${etiqueta.nivel}`}
-                    {etiqueta.posicao && `-${etiqueta.posicao}`}
-                  </TableCell>
-                  <TableCell>
-                    {etiqueta.capacidade > 0 &&
-                      `${etiqueta.capacidade} palete${
-                        etiqueta.capacidade === 1 ? "" : "s"
-                      }`}
-                  </TableCell>
-                  <TableCell>
-                    {getNomeTipoArmazenagem(etiqueta.tipoArmazenagem)}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        etiqueta.status === "Ativo"
-                          ? "default"
-                          : etiqueta.status === "Manutenção"
-                          ? "secondary"
-                          : "outline"
-                      }
-                    >
-                      {etiqueta.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(etiqueta)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(etiqueta)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          <div className="mb-4 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+            <div>
+              <Label htmlFor="filtroEmpresa">Empresa *</Label>
+              <Select
+                value={filter.id_empresa}
+                onValueChange={(value) => {
+                  setFilter({ ...filter, id_empresa: value });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a empresa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {empresas.map((empresa) => (
+                    <SelectItem key={empresa.id} value={empresa.id}>
+                      {empresa.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="filtroCodigo">Código Rua</Label>
+              <Input
+                id="filtroCodigo"
+                value={filter.codigo_rua}
+                onChange={(e) =>
+                  setFilter({ ...filter, codigo_rua: e.target.value })
+                }
+                placeholder="Digite o código..."
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="filtroStatus">Status</Label>
+              <Select
+                value={filter.status}
+                onValueChange={(value) =>
+                  setFilter({ ...filter, status: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Todos">Todos</SelectItem>
+                  <SelectItem value="Ativo">Ativo</SelectItem>
+                  <SelectItem value="Inativo">Inativo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full"
+                onClick={() =>
+                  setFilter({
+                    codigo_rua: "",
+                    status: "Todos",
+                    id_empresa: buscaEmpresaId(),
+                  })
+                }
+              >
+                Limpar filtros
+              </Button>
+            </div>
+          </div>
+          {etiquetas.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">
+              Nenhuma etiqueta de posição cadastrada para os filtros
+              selecionados.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Código</TableHead>
+                  <TableHead>CD</TableHead>
+                  <TableHead className="flex items-center gap-1">
+                    <span>Localização</span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                      </TooltipTrigger>
+                      <TooltipContent sideOffset={8}>
+                        bloco-nível-posição-modulo
+                      </TooltipContent>
+                    </Tooltip>
+                  </TableHead>
+                  <TableHead>Capacidade</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {etiquetas.map((etiqueta) => (
+                  <TableRow key={etiqueta.id}>
+                    <TableCell className="font-medium">
+                      {etiqueta.codigo}
+                    </TableCell>
+                    <TableCell>{getNomeCd(etiqueta.cd)}</TableCell>
+                    <TableCell>
+                      {etiqueta.bloco}-{etiqueta.rua}
+                      {etiqueta.modulo && `-${etiqueta.modulo}`}
+                      {etiqueta.nivel && `-${etiqueta.nivel}`}
+                      {etiqueta.posicao && `-${etiqueta.posicao}`}
+                    </TableCell>
+                    <TableCell>
+                        {`${etiqueta.capacidade} palete${etiqueta.capacidade === 1 ? "" : "s"}`}
+                    </TableCell>
+                    <TableCell>
+                      {getNomeTipoArmazenagem(etiqueta.tipoArmazenagem)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          etiqueta.status === "Ativo"
+                            ? "default"
+                            : etiqueta.status === "Manutenção"
+                            ? "secondary"
+                            : "outline"
+                        }
+                      >
+                        {etiqueta.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(etiqueta)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(etiqueta)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

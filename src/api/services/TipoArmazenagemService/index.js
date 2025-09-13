@@ -39,8 +39,7 @@ export async function updateArmazenagem(payload) {
   return response;
 }
 
-export async function deleteArmazenagem(id) {
-  const empresaId = buscaEmpresaId();
+export async function deleteArmazenagem(id,empresaId) {
   const response = await Api.remove(
     `${authEndpoint}/${empresaId}/tipos-armazenagem/${id}`
   );

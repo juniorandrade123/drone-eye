@@ -84,7 +84,12 @@ const CadastroTipoArmazenagem = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.codigo || !formData.nome || !formData.id_categoria || !formData.id_empresa) {
+    if (
+      !formData.codigo ||
+      !formData.nome ||
+      !formData.id_categoria ||
+      !formData.id_empresa
+    ) {
       toast({
         title: "Erro",
         description: "Empresa, código, nome e categoria são obrigatórios",
@@ -156,7 +161,10 @@ const CadastroTipoArmazenagem = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const apiResponse = await TipoArmazenagemService.deleteArmazenagem(id);
+    const apiResponse = await TipoArmazenagemService.deleteArmazenagem(
+      id,
+      filter.id_empresa
+    );
     if (apiResponse.ok) {
       toast({
         title: "Sucesso",
@@ -593,7 +601,8 @@ const CadastroTipoArmazenagem = () => {
 
           {tipos.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground">
-              Nenhum tipo de armazenagem cadastrado para os filtros selecionados.
+              Nenhum tipo de armazenagem cadastrado para os filtros
+              selecionados.
             </div>
           ) : (
             <Table>
