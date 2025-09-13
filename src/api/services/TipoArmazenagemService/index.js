@@ -1,5 +1,4 @@
 import { Api } from "../../config";
-import { buscaEmpresaId } from "../../config/auth";
 
 const authEndpoint = `empresas`;
 

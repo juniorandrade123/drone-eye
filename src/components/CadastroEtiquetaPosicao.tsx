@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/tooltip";
 import { buscaEmpresaId } from "@/api/config/auth";
 import { Empresa } from "./CadastroEmpresa";
+
 interface EtiquetaPosicao {
   id: string;
   codigo: string;
@@ -98,7 +99,9 @@ const CadastroEtiquetaPosicao = () => {
   const { toast } = useToast();
   const [etiquetas, setEtiquetas] = useState<EtiquetaPosicao[]>([]);
   const [tipos, setTipos] = useState<TipoArmazenagem[]>([]);
+  const [tiposFiltro, setTiposFiltro] = useState<TipoArmazenagem[]>([]);
   const [cd, setCd] = useState<CentroDistribuicaoCard[]>([]);
+  const [cdsFiltro, setGetCdsFiltro] = useState<CentroDistribuicaoCard[]>([]);
   const [ruas, setRuas] = useState<RuaDTO[]>([]);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
 
@@ -397,6 +400,21 @@ const CadastroEtiquetaPosicao = () => {
     }
   };
 
+  const getTiposArmazenagemFiltro = async () => {
+    const apiResponse = await TipoArmazenagemService.getArmazenagens(
+      true,
+      filter.id_empresa
+    );
+    if (apiResponse.ok) {
+      setTiposFiltro(apiResponse.data);
+    } else {
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os tipos de armazenagem.",
+      });
+    }
+  };
+
   const getCds = async () => {
     const apiResponse = await DashboardService.getCdsStatus(
       formData.id_empresa
@@ -416,6 +434,14 @@ const CadastroEtiquetaPosicao = () => {
         title: "Erro",
         description: "Erro ao carregar Centros de Distribuição.",
       });
+    }
+  };
+
+  const getCdsFiltro = async () => {
+    const apiResponse = await DashboardService.getCdsStatus(filter.id_empresa);
+    if (apiResponse.ok) {
+      const data = apiResponse.data.cds;
+      setGetCdsFiltro(data);
     }
   };
 
@@ -457,7 +483,7 @@ const CadastroEtiquetaPosicao = () => {
   };
 
   const getNomeTipoArmazenagem = (id: string) => {
-    const tipo = tipos.find((tipo) => tipo.id === id);
+    const tipo = tiposFiltro.find((tipo) => tipo.id === id);
     return tipo ? tipo.nome : "";
   };
 
@@ -482,6 +508,8 @@ const CadastroEtiquetaPosicao = () => {
 
   useEffect(() => {
     getEtiquetas();
+    getTiposArmazenagemFiltro();
+    getCdsFiltro();
   }, [filter]);
 
   return (
@@ -759,7 +787,7 @@ const CadastroEtiquetaPosicao = () => {
             </div>
 
             <div>
-              <Label htmlFor="filtroStatus">Status</Label>
+              <Label htmlFor="filtroStatus">,</Label>
               <Select
                 value={filter.status}
                 onValueChange={(value) =>
@@ -835,7 +863,9 @@ const CadastroEtiquetaPosicao = () => {
                       {etiqueta.posicao && `-${etiqueta.posicao}`}
                     </TableCell>
                     <TableCell>
-                        {`${etiqueta.capacidade} palete${etiqueta.capacidade === 1 ? "" : "s"}`}
+                      {`${etiqueta.capacidade} palete${
+                        etiqueta.capacidade === 1 ? "" : "s"
+                      }`}
                     </TableCell>
                     <TableCell>
                       {getNomeTipoArmazenagem(etiqueta.tipoArmazenagem)}
