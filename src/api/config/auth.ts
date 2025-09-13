@@ -24,3 +24,10 @@ export const buscaUsuarioId = () => {
     const session = JSON.parse(userStr);
     return session.usuario.id;
 }
+
+export const buscaUsuarioNome = () => {
+    const userStr = sessionStorage.getItem(USER_KEY);
+    if (!userStr) return '';
+    const session = JSON.parse(userStr);
+    return session.usuario.nome;
+}
