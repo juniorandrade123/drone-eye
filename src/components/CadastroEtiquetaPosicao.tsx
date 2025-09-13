@@ -863,9 +863,7 @@ const CadastroEtiquetaPosicao = () => {
                       {etiqueta.posicao && `-${etiqueta.posicao}`}
                     </TableCell>
                     <TableCell>
-                      {`${etiqueta.capacidade} palete${
-                        etiqueta.capacidade === 1 ? "" : "s"
-                      }`}
+                      {`${etiqueta.capacidade != null ? etiqueta.capacidade : 0} palete${(etiqueta.capacidade ?? 0) === 1 ? "" : "s"}`}
                     </TableCell>
                     <TableCell>
                       {getNomeTipoArmazenagem(etiqueta.tipoArmazenagem)}
