@@ -2,7 +2,14 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { Camera, MapPin, Package, LogOut, User } from "lucide-react";
+import {
+  Camera,
+  MapPin,
+  Package,
+  LogOut,
+  User,
+  ChevronDown,
+} from "lucide-react";
 
 import Dashboard from "@/components/Dashboard";
 import CadastroCD from "@/components/CadastroCD";
@@ -76,7 +83,7 @@ const Index = () => {
       .map((n) => n[0].toUpperCase() + ".")
       .join(" ");
     return `${primeiro} ${iniciais} ${ultimo}`;
-  }
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -188,19 +195,7 @@ const Index = () => {
                     type="button"
                   >
                     <span>{formatarNomeUsuario(buscaUsuarioNome())}</span>
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
+                    <ChevronDown className="w-4 h-4" />
                   </button>
                   {showUserDropdown && (
                     <div
