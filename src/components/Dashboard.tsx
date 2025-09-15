@@ -79,7 +79,7 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
 
   const REFRESH_INTERVAL_MS = 1 * 60 * 1000; // 1 minuto
 
-  const [statusSelecionado, setStatusSelecionado] = useState("");
+  const [statusSelecionado, setStatusSelecionado] = useState("1");
 
   const [ultimosInventarios, setUltimosInventarios] = React.useState([]);
 
@@ -141,6 +141,14 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
       }));
 
       setCdsAtivos(cds);
+
+      setUltimaAtualizacao(
+        new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        })
+      );
     } else {
       toast({
         title: "Erro",
@@ -317,9 +325,7 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
             <span>
               Monitoramento em tempo real da ocupação e atividade dos CDs
             </span>
-            <span>
-              Última atualização: {ultimaAtualizacao || "-"}
-            </span>
+            <span>Última atualização: {ultimaAtualizacao || "-"}</span>
           </CardDescription>
         </CardHeader>
         <CardContent>
