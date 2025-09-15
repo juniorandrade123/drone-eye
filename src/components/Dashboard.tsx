@@ -35,14 +35,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "./ui/label";
-import { on } from "events";
 
 interface DashboardProps {
   onEditCD?: (cdNome: string) => void;
 }
 
 const Dashboard = ({ onEditCD }: DashboardProps) => {
+  const [ultimaAtualizacao, setUltimaAtualizacao] = useState<string>("");
   const { toast } = useToast();
 
   const [cdsAtivos, setCdsAtivos] = React.useState([]);
@@ -77,7 +76,8 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
       porcentagem: null,
     },
   ]);
-  const REFRESH_INTERVAL_MS = 2 * 60 * 1000;
+
+  const REFRESH_INTERVAL_MS = 1 * 60 * 1000; // 1 minuto
 
   const [statusSelecionado, setStatusSelecionado] = useState("");
 
@@ -212,6 +212,13 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
     getCds();
     getUltimosInventarios();
     getAlertas();
+    setUltimaAtualizacao(
+      new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      })
+    );
   };
 
   React.useEffect(() => {
@@ -306,8 +313,13 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
               </Select>
             </div>
           </CardTitle>
-          <CardDescription>
-            Monitoramento em tempo real da ocupação e atividade dos CDs
+          <CardDescription className="flex justify-between items-center w-full">
+            <span>
+              Monitoramento em tempo real da ocupação e atividade dos CDs
+            </span>
+            <span>
+              Última atualização: {ultimaAtualizacao || "-"}
+            </span>
           </CardDescription>
         </CardHeader>
         <CardContent>

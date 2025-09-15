@@ -42,6 +42,7 @@ import {
   Clock,
   Timer,
   Save,
+  PlayCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import EdicaoManualModal from "./EdicaoManualModal";
@@ -74,7 +75,7 @@ const VisualizacaoGrid = ({ idCd: idCdProp }) => {
   );
   const [cdSelecionado, setCdSelecionado] = useState("");
   const [cdsDisponiveis, setCdsDisponiveis] = useState<
-  CentroDistribuicaoCard[]
+    CentroDistribuicaoCard[]
   >([]);
   const [ruasDisponiveis, setRuasDisponiveis] = useState<RuaDTO[]>([]);
   const [ruaSelecionada, setRuaSelecionada] = useState("");
@@ -96,7 +97,7 @@ const VisualizacaoGrid = ({ idCd: idCdProp }) => {
   const { toast } = useToast();
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [empresaSelecionada, setEmpresaSelecionada] = useState("");
-  
+
   const [dataInicio, setDataInicio] = useState<Date | undefined>(() => {
     const now = new Date();
     const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
@@ -223,7 +224,6 @@ const VisualizacaoGrid = ({ idCd: idCdProp }) => {
     //   setModalEdicaoAberto(true);
     //   return;
     // }
-
   };
 
   const handleSalvarEdicaoManual = (paleteId: string, sku: string) => {
@@ -283,7 +283,7 @@ const VisualizacaoGrid = ({ idCd: idCdProp }) => {
   const kpis = calcularKPIsTempo();
 
   const getCds = async () => {
-    if(empresaSelecionada === "") return;
+    if (empresaSelecionada === "") return;
     const apiResponse = await DashboardService.getCdsStatus(empresaSelecionada);
     if (apiResponse.ok) {
       const data = apiResponse.data.cds;
@@ -304,8 +304,12 @@ const VisualizacaoGrid = ({ idCd: idCdProp }) => {
 
   const getRuas = async () => {
     if (!cdSelecionado) return;
-    const apiResponse = await ConfiguracaoRuaService.listarRuas(cdSelecionado, false, empresaSelecionada);
-    
+    const apiResponse = await ConfiguracaoRuaService.listarRuas(
+      cdSelecionado,
+      false,
+      empresaSelecionada
+    );
+
     if (apiResponse.ok) {
       const data = apiResponse.data;
       setRuasDisponiveis(data);
@@ -426,7 +430,7 @@ const VisualizacaoGrid = ({ idCd: idCdProp }) => {
   const carregarDadosIniciais = useCallback(async () => {
     if (idCd) {
       try {
-        setEmpresaSelecionada(buscaEmpresaId)
+        setEmpresaSelecionada(buscaEmpresaId);
         await setCdSelecionado(idCd);
         setTimeout(() => {
           if (ruasDisponiveis.length > 0 && ruasDisponiveis[0]?.id) {
@@ -442,19 +446,25 @@ const VisualizacaoGrid = ({ idCd: idCdProp }) => {
     }
   }, [idCd, ruasDisponiveis, toast]);
 
-    const getEmpresas = async () => {
-      const apiResponse = await EmpresaService.getEmpresas();
-  
-      if (apiResponse.ok) {
-        setEmpresas(apiResponse.data as Empresa[]);
-      } else {
-        toast({
-          title: "Erro",
-          description: apiResponse.error.message,
-        });
-      }
-    };
+  const getEmpresas = async () => {
+    const apiResponse = await EmpresaService.getEmpresas();
 
+    if (apiResponse.ok) {
+      setEmpresas(apiResponse.data as Empresa[]);
+    } else {
+      toast({
+        title: "Erro",
+        description: apiResponse.error.message,
+      });
+    }
+  };
+
+  const iniciarInventario = async () => {
+    toast({
+      title: "Sucesso",
+      description: "Inventário iniciado com sucesso.",
+    });
+  };
 
   useEffect(() => {
     if (idCd) {
@@ -494,9 +504,7 @@ const VisualizacaoGrid = ({ idCd: idCdProp }) => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Empresa
-              </label>
+              <label className="text-sm font-medium">Empresa</label>
               <Select
                 value={empresaSelecionada}
                 onValueChange={(value) => {
@@ -517,7 +525,7 @@ const VisualizacaoGrid = ({ idCd: idCdProp }) => {
                 </SelectContent>
               </Select>
             </div>
-       
+
             <div className="space-y-2">
               <label className="text-sm font-medium">
                 Centro de Distribuição
@@ -677,7 +685,7 @@ const VisualizacaoGrid = ({ idCd: idCdProp }) => {
           </div>
 
           {/* Legenda */}
-          <div className="flex gap-6 mb-6 p-4 bg-gray-50 rounded-lg">
+          <div className="flex gap-6 mb-6 p-4 bg-gray-50 rounded-lg items-center">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-600" />
               <span className="text-sm">Lido (clique para ver foto)</span>
@@ -693,9 +701,19 @@ const VisualizacaoGrid = ({ idCd: idCdProp }) => {
             {/* <div className="flex items-center gap-2">
               <Edit className="h-4 w-4 text-blue-600" />
               <span className="text-sm">
-                Ctrl+Click para editar manualmente
+          Ctrl+Click para editar manualmente
               </span>
             </div> */}
+            <div className="flex-1"></div>
+            <div>
+              <Button
+                onClick={iniciarInventario}
+                className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 ml-auto"
+              >
+                Iniciar Inventário
+                <PlayCircle />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

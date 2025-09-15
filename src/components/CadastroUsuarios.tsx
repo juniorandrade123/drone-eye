@@ -6,6 +6,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+interface CadastroUsuariosProps {
+  perfilId?: string;
+}
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -23,6 +26,7 @@ import { UsuarioService } from "@/api/services";
 import moment from "moment";
 import { EmpresaService } from "@/api/services";
 import { Empresa } from "./CadastroEmpresa";
+import { buscaEmpresaId } from "@/api/config/auth";
 
 interface Usuario {
   id: string;
@@ -34,7 +38,7 @@ interface Usuario {
   id_empresa: string;
 }
 
-const CadastroUsuarios = () => {
+const CadastroUsuarios = ({ perfilId }: CadastroUsuariosProps) => {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [formData, setFormData] = useState({
     nome: "",
@@ -49,13 +53,17 @@ const CadastroUsuarios = () => {
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [senhaError, setSenhaError] = useState<string>("");
 
-  useEffect(() => {
-    getUsers();
-    getEmpresas();
-  }, []);
+  const [filter, setFilter] = useState({
+    status: false,
+    id_empresa: buscaEmpresaId(),
+  });
 
   const getUsers = async () => {
-    const apiResponse = await UsuarioService.getUsers(true);
+    const apiResponse = await UsuarioService.getUsers(
+      filter.id_empresa,
+      filter.status,
+    );
+
     if (apiResponse.ok) {
       const users = apiResponse.data.map((u: any) => {
         return {
@@ -88,7 +96,6 @@ const CadastroUsuarios = () => {
       return;
     }
 
-    // Validação da senha
     if (!editingId) {
       const senhaValida = isSenhaValida(formData.senha);
       if (senhaValida !== true) {
@@ -203,9 +210,9 @@ const CadastroUsuarios = () => {
   };
 
   const cancelEdit = () => {
-  setEditingId(null);
-  setFormData({ nome: "", email: "", senha: "", perfil: "", empresa: "" });
-  setSenhaError("");
+    setEditingId(null);
+    setFormData({ nome: "", email: "", senha: "", perfil: "", empresa: "" });
+    setSenhaError("");
   };
 
   const getPerfilIcon = (perfil: string) => {
@@ -239,14 +246,38 @@ const CadastroUsuarios = () => {
     if (senha.length < 8) {
       return "A senha deve ter pelo menos 8 caracteres.";
     }
-    if (!/[a-zA-Z]/.test(senha)) {
-      return "A senha deve conter pelo menos uma letra.";
+    if (!/[A-Z]/.test(senha)) {
+      return "A senha deve conter pelo menos uma letra maiúscula.";
+    }
+    if (!/[a-z]/.test(senha)) {
+      return "A senha deve conter pelo menos uma letra minúscula.";
     }
     if (!/\d/.test(senha)) {
       return "A senha deve conter pelo menos um número.";
     }
+    if (!/[!@#$%^&*(),.?":{}|<>_\-+=~`[\]\\\/]/.test(senha)) {
+      return "A senha deve conter pelo menos um caractere especial.";
+    }
     return true;
   };
+
+  useEffect(() => {
+    getUsers();
+    getEmpresas();
+  }, []);
+
+  useEffect(() => {
+    getUsers();
+  }, [filter]);
+
+  useEffect(() => {
+    if (perfilId && usuarios.length > 0) {
+      const usuario = usuarios.find(u => u.id === perfilId && u.id_empresa === filter.id_empresa);
+      if (usuario) {
+        handleEdit(usuario);
+      }
+    }
+  }, [perfilId, usuarios, filter.id_empresa]);
 
   return (
     <div className="space-y-6">
@@ -318,7 +349,9 @@ const CadastroUsuarios = () => {
                   required={!editingId}
                 />
                 {senhaError && (
-                  <span className="text-red-600 text-sm mt-1 block">{senhaError}</span>
+                  <span className="text-red-600 text-sm mt-1 block">
+                    {senhaError}
+                  </span>
                 )}
               </div>
               <div>
@@ -388,62 +421,125 @@ const CadastroUsuarios = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {usuarios.map((usuario) => {
-              const PerfilIcon = getPerfilIcon(usuario.perfil);
-              return (
-                <div
-                  key={usuario.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-semibold">{usuario.nome}</h3>
-                      <Badge className={getPerfilColor(usuario.perfil)}>
-                        <PerfilIcon className="h-3 w-3 mr-1" />
-                        {usuario.perfil}
-                      </Badge>
-                      <Badge variant={usuario.status ? "default" : "secondary"}>
-                        {usuario.status ? "ativo" : "inativo"}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {usuario.email}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Criado em:{" "}
-                      {moment(usuario.dataCriacao).format(
-                        "DD/MM/YYYY HH:mm:ss"
-                      )}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => toggleStatus(usuario)}
-                    >
-                      {usuario.status ? "Desativar" : "Ativar"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(usuario)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(usuario.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="mb-4 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+            <div>
+              <Label htmlFor="filtroEmpresa">Empresa *</Label>
+              <Select
+                value={filter.id_empresa}
+                onValueChange={(value) =>
+                  setFilter({ ...filter, id_empresa: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a empresa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {empresas.map((empresa) => (
+                    <SelectItem key={empresa.id} value={empresa.id}>
+                      {empresa.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+       
+            <div>
+              <Label htmlFor="filtroStatus">Somente Ativos</Label>
+              <Select
+                value={filter.status ? "true" : "false"}
+                onValueChange={(value) =>
+                  setFilter({ ...filter, status: value === "true" })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Incluir usuários inativos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="false">Sim</SelectItem>
+                  <SelectItem value="true">Não</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full"
+                onClick={() =>
+                  setFilter({
+                    status: false,
+                    id_empresa: buscaEmpresaId(),
+                  })
+                }
+              >
+                Limpar filtros
+              </Button>
+            </div>
           </div>
+          {usuarios.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">
+              Nenhum usuário cadastrado para os filtros selecionados.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {usuarios.map((usuario) => {
+                const PerfilIcon = getPerfilIcon(usuario.perfil);
+                return (
+                  <div
+                    key={usuario.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-semibold">{usuario.nome}</h3>
+                        <Badge className={getPerfilColor(usuario.perfil)}>
+                          <PerfilIcon className="h-3 w-3 mr-1" />
+                          {usuario.perfil}
+                        </Badge>
+                        <Badge
+                          variant={usuario.status ? "default" : "secondary"}
+                        >
+                          {usuario.status ? "ativo" : "inativo"}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {usuario.email}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Criado em:{" "}
+                        {moment(usuario.dataCriacao).format(
+                          "DD/MM/YYYY HH:mm:ss"
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleStatus(usuario)}
+                      >
+                        {usuario.status ? "Desativar" : "Ativar"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(usuario)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(usuario.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
