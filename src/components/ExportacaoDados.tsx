@@ -40,7 +40,10 @@ import { CentroDistribuicaoCard } from "@/types/dashboard-models";
 import { DashboardService } from "@/api/services";
 import { RelatorioFinalService } from "@/api/services";
 import { ConfiguracaoRuaService } from "@/api/services";
+import { EmpresaService } from "@/api/services";
 import { RuaDTO } from "@/types/rua-model";
+import { Empresa } from "./CadastroEmpresa";
+import { set } from "date-fns";
 
 const ExportacaoDados = () => {
   const [formatoExportacao, setFormatoExportacao] = useState("XML");
@@ -52,10 +55,14 @@ const ExportacaoDados = () => {
   const { toast } = useToast();
   const [cds, setCds] = useState<CentroDistribuicaoCard[]>([]);
   const [ruas, setRuas] = useState<RuaDTO[]>([]);
+  const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [empresaSelecionada, setEmpresaSelecionada] = useState<Empresa | null>(
+    null
+  );
 
   const [dataInicio, setDataInicio] = useState<Date | undefined>(() => {
     const now = new Date();
-    const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() , 1);
+    const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth(), 1);
     return threeMonthsAgo;
   });
 
@@ -153,11 +160,43 @@ const ExportacaoDados = () => {
     },
   ];
 
-  const handleExportar = () => {
-    if (!cdSelecionado || !ruaSelecionada || !dataInicio || !dataFim) {
+  const getEmpresas = async () => {
+    const apiResponse = await EmpresaService.getEmpresas();
+
+    if (apiResponse.ok) {
+      setEmpresas(apiResponse.data as Empresa[]);
+      setCdSelecionado("");
+    } else {
       toast({
         title: "Erro",
-        description: "Todos os campos são obrigatórios",
+        description: apiResponse.error.message,
+      });
+    }
+  };
+
+  const handleExportar = () => {
+    if (!empresaSelecionada) {
+      toast({
+        title: "Erro",
+        description: "Selecione a empresa.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formatoExportacao) {
+      toast({
+        title: "Erro",
+        description: "Selecione o formato de exportação.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!cdSelecionado) {
+      toast({
+        title: "Erro",
+        description: "Selecione o Centro de Distribuição.",
         variant: "destructive",
       });
       return;
@@ -242,7 +281,9 @@ const ExportacaoDados = () => {
     : [];
 
   const getCds = async () => {
-    const apiResponse = await DashboardService.getCdsStatus();
+    const apiResponse = await DashboardService.getCdsStatus(
+      empresaSelecionada.id
+    );
     if (apiResponse.ok) {
       const data = apiResponse.data.cds;
       setCds(data);
@@ -256,16 +297,15 @@ const ExportacaoDados = () => {
 
   const getRuas = async () => {
     if (!cdSelecionado) return;
-    const apiResponse = await ConfiguracaoRuaService.listarRuas(cdSelecionado);
+    const apiResponse = await ConfiguracaoRuaService.listarRuas(
+      cdSelecionado,
+      true,
+      empresaSelecionada.id
+    );
     if (apiResponse.ok) {
       const data = apiResponse.data;
       setRuas(data);
-      if (data.length === 0) {
-        toast({
-          title: "Atenção",
-          description: "Centro de Distribuição não possui ruas ativas",
-        });
-      }
+
     } else {
       toast({
         title: "Erro",
@@ -305,6 +345,7 @@ const ExportacaoDados = () => {
 
     const apiResponse = await RelatorioFinalService.getRelatorioXml(
       cdSelecionado,
+      empresaSelecionada.id,
       dataInicioStr,
       dataFimStr,
       ruaSelecionada
@@ -325,7 +366,12 @@ const ExportacaoDados = () => {
 
   useEffect(() => {
     getCds();
+    getEmpresas();
   }, []);
+
+  useEffect(() => {
+    getCds();
+  }, [empresaSelecionada]);
 
   useEffect(() => {
     getRuas();
@@ -372,6 +418,30 @@ const ExportacaoDados = () => {
               {/* Seleção de Formato */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
+                  <Label>Empresa *</Label>
+                  <Select
+                    value={empresaSelecionada ? empresaSelecionada.id : ""}
+                    onValueChange={(value) => {
+                      setCdSelecionado("");
+                      setRuaSelecionada("");
+                      setEmpresaSelecionada(
+                        empresas.find((empresa) => empresa.id === value) || null
+                      );
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a empresa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {empresas.map((empresa) => (
+                        <SelectItem key={empresa.id} value={empresa.id}>
+                          {empresa.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <Label>Formato do Arquivo *</Label>
                   <Select
                     value={formatoExportacao}
@@ -402,6 +472,28 @@ const ExportacaoDados = () => {
                           XML
                         </div>
                       </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Centro de Distribuição *</Label>
+                  <Select
+                    value={cdSelecionado}
+                    onValueChange={(value) => {
+                      setCdSelecionado(value);
+                      setRuaSelecionada("");
+                    }}
+                    disabled={!empresaSelecionada}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o Cd" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cds.map((cd) => (
+                        <SelectItem key={cd.id_cd} value={cd.id_cd}>
+                          {cd.nome}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -448,25 +540,6 @@ const ExportacaoDados = () => {
                   Filtros de Dados (Opcional)
                 </Label>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">
-                  <div className="space-y-2">
-                    <Label>Centro de Distribuição</Label>
-                    <Select
-                      value={cdSelecionado}
-                      onValueChange={setCdSelecionado}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o Cd" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {cds.map((cd) => (
-                          <SelectItem key={cd.id_cd} value={cd.id_cd}>
-                            {cd.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
                   <div className="space-y-2">
                     <Label>Rua</Label>
                     <Select
@@ -544,6 +617,7 @@ const ExportacaoDados = () => {
               {/* Botão de Exportação */}
               <div className="flex justify-end">
                 <Button
+                  disabled={!empresaSelecionada}
                   onClick={handleExportar}
                   className="flex items-center gap-2"
                   size="lg"

@@ -348,14 +348,12 @@ const VisualizacaoGrid = ({ idCd: idCdProp }) => {
 
     const dataInicioStr = formatDate(dataInicio, false);
     const dataFimStr = formatDate(dataFim, true);
-    const codigo_rua = ruasDisponiveis.find(
-      (r) => r.id === ruaSelecionada
-    )?.nome_rua;
+
     const apiResponse = await RelatorioFinalService.getRelatorioFinal(
       cdSelecionado,
       dataInicioStr,
       dataFimStr,
-      codigo_rua
+      empresaSelecionada
     );
 
     if (apiResponse.ok) {
@@ -485,8 +483,16 @@ const VisualizacaoGrid = ({ idCd: idCdProp }) => {
   }, [cdSelecionado]);
 
   useEffect(() => {
-    getRelatoriosFinais();
-  }, [cdSelecionado, ruaSelecionada, dataInicio, dataFim]);
+    if (
+      empresaSelecionada &&
+      cdSelecionado &&
+      ruaSelecionada &&
+      dataInicio &&
+      dataFim
+    ) {
+      getRelatoriosFinais();
+    }
+  }, [empresaSelecionada, cdSelecionado, ruaSelecionada, dataInicio, dataFim]);
 
   return (
     <div className="space-y-6">
