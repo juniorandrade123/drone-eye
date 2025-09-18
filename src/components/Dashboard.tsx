@@ -298,7 +298,7 @@ const Dashboard = ({ onEditCD }: DashboardProps) => {
           <CardTitle className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Warehouse className="h-5 w-5 text-blue-600" />
-              Status dos Centros de Distribuição
+              Inventário em Andamento
             </div>
             <div className="w-40 flex-shrink-0">
               <Select
